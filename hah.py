@@ -193,7 +193,7 @@ if __name__ == "__main__":
     parser.add_argument('--send-payload', action='store_true',
                         help='send server data as JSON payload')
     parser.add_argument('--search', nargs=1, required=False, type=str,
-                        help='search for specific server by description')
+                        help='search for specific server by CPU description')
 
     cli_args = parser.parse_args()
 
