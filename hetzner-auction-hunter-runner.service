@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Hetzner Auction Hunter for Cheap Servers
+
+[Service]
+ExecStart=/bin/bash -c "${HOME}/containers/compose/hetzner-auction-hunter/run.sh"
+#ExecStop=/bin/bash -c "${HOME}/containers/compose/hetzner-auction-hunter/stop.sh"
+
+[Install]
+WantedBy=default.target

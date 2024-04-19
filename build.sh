@@ -6,14 +6,18 @@ engine=${1-"podman"}
 # Container Name
 name="hetzner-auction-hunter"
 
-# Location of Sources
-subfolder="hetzner-auction-hunter"
+# Location of Build Sources
+buildfolder="hetzner-auction-hunter"
 
 # Target Platform
 targetplatform="linux/amd64"
 
 # Repository
+# For Remote Pulls
 repository="https://github.com/luckylinux/hetzner-auction-hunter"
+
+# For Local Pulls
+repository="./app"
 
 # Which CPUs to use during Build
 cpus="0,1,2,3"
@@ -43,28 +47,21 @@ then
    echo "Both Container Name and Tag Must be Set" !
 fi
 
+# Create Folder if not Exist
+mkdir -p "${buildfolder}"
+
 # Check if GitHub Repository has already been cloned
 if [[ ! -d "${subfolder}" ]]
 then
    # Clone Repository
-   git clone "${repository}.git" "${subfolder}"
+   git clone "${repository}.git" "${buildfolder}"
 fi
 
 # Change Folder
-cd ${subfolder}
+cd ${buildfolder}
 
 # Update Local Copy if needed
 git pull
-
-# Start with a fresh Dockerfile
-wget https://raw.githubusercontent.com/maxroll-media-group/hetzner-auction-hunter/master/Dockerfile -O ${buildfile}
-
-# Replace Python Version in Dockerfile
-sed -Ei "s|FROM python:3.10-slim-buster(.*?)$|FROM python:3.11-slim-bookworm\1|g" ${buildfile}
-
-# Also enable Python while we are at it
-#sed -Ei "s|.*?(RUN apk update)$|\1\nRUN apk add --no-cache python3 py3-pip python3-dev pixman-dev cairo cairo-dev pango pango-dev make g++|g" ${buildfile}
-#cat ${buildfile}
 
 # Copy requirements into the build context
 # cp <myfolder> . -r docker build . -t  project:latest

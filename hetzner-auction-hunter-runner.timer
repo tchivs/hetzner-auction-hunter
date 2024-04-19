@@ -1,0 +1,26 @@
+[Unit]
+Description=Run Hetzner Auction Hunter for Cheap Servers
+RefuseManualStart=no
+RefuseManualStop=no
+
+[Timer]
+# Execute job if it missed a run due to machine being off
+Persistent=true
+
+# Set the timer accuracy to 1 second instead of the default 1 minute
+AccuracySec=15s
+
+# Run Every Day and every Hour *:00:00
+OnCalendar=*-*-* *:00:00
+
+# Run when enabled (after a small Delay)
+OnActiveSec=5s
+
+# After System Reboot (after a small Delay)
+OnBootSec=60s
+
+# File describing job to execute
+Unit=hetzner-auction-hunter-runner.service
+
+[Install]
+WantedBy=timers.target

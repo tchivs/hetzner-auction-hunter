@@ -11,7 +11,6 @@ import base64
 # Use SQLite3
 import sqlite3
 
-
 class Server:
     def get_disk_description(self):
         disk_descriptors = [
@@ -267,8 +266,14 @@ if __name__ == "__main__":
 
             print(server.get_header())
             if not cli_args.test_mode:
-                send_notification(notifier, server, cli_args.send_payload)
-                f.write(","+str(server.id))
+                # Process Server first in the Database
+                #print(server)
+
+
+                # If Server is not Already in the Database with the same Price
+                pass
+                    #send_notification(notifier, server, cli_args.send_payload)
+                    #f.write(","+str(server.id))
 
     if not cli_args.test_mode:
         f.close()
