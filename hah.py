@@ -8,6 +8,9 @@ import argparse
 import html2text
 import base64
 
+# Use SQLite3
+import sqlite3
+
 
 class Server:
     def get_disk_description(self):

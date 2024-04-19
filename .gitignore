@@ -1,2 +1,18 @@
+# Ignore Live Data
 live_data_sb.json
+
+# Ignore Editor Settings
 .vscode/settings.json
+
+# Ignore Credentials in .env File
+.env
+
+# Ignore Python venv
+venv/
+**/venv/
+**/venv/*
+
+# Ignore Search / Results Data
+data/
+**/data/
+**/data/*
