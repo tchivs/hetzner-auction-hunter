@@ -6,11 +6,23 @@ LABEL website="https://github.com/danielskowronski/hetzner-auction-hunter"
 # Copy Sources
 COPY app/ /opt/app
 
+# Create venv
+RUN python3 -m venv "/opt/venv"
+
+# Set PATH Variable to include venv
+ENV PATH="$PATH:/opt/venv"
+
+# Activate venv
+RUN source "/opt/venv/bin/activate"
+
+# Set PATH Variable to Include venv
+ENV PATH="$PATH:/opt/venv"
+
+# Install required Packages
+RUN pip install --no-cache-dir -r /opt/app/requirements.txt
+
 # Change Directory
 WORKDIR "/opt/app"
-
-# Install Required Python Modules
-RUN python3 -m pip install --no-cache-dir -r /opt/app/requirements.txt
 
 # Run Command
 ENTRYPOINT [ "./hah.py" ]
