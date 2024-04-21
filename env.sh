@@ -39,7 +39,7 @@ then
     APP_SEARCH_PATH="${APP_HOST_SEARCH_PATH}"
     APP_RESULTS_PATH="${APP_HOST_RESULTS_PATH}"
 else
-    echo "Invalid value for RUN_MODE. Allowed Options are: <local> / <container>"
+    echo "Invalid value for RUN_MODE. Allowed Options are: <local> / <container>. Got <${RUN_MODE}>."
 fi
 
 # Show Running Configuration

@@ -279,7 +279,7 @@ class Server:
         terminalColums = os.system("TERM=dumb tput cols")
 
         # Set Maximum Width for the Table
-        t.set_max_width(terminalColums*0.9)
+        t.set_max_width(terminalColums*0.8)
 
 	    # Initialize Variable
         data = []
@@ -365,7 +365,7 @@ class Analysis(Server):
         terminalColums = os.system("TERM=dumb tput cols")
 
         # Set Maximum Width for the Table
-        t.set_max_width(terminalColums*0.9)
+        t.set_max_width(terminalColums*0.8)
 
 	    # Initialize Variable
         data = []

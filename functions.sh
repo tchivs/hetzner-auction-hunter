@@ -213,6 +213,6 @@ perform_search() {
         # Run the APP
         ./app/hah.py ${lhahargs[*]}
     else
-        echo "Invalid value for RUN_MODE. Allowed Options are: <local> / <container>"
+        echo "Invalid value for RUN_MODE. Allowed Options are: <local> / <container>. Got <${RUN_MODE}>."
     fi
 }
