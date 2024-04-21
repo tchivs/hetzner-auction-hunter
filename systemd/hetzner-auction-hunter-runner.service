@@ -2,7 +2,11 @@
 Description=Run Hetzner Auction Hunter for Cheap Servers
 
 [Service]
-ExecStart=/bin/bash -c "${HOME}/containers/compose/hetzner-auction-hunter/run.sh"
+# This does NOT work
+#ExecStart=/bin/bash -c "${HOME}/containers/compose/hetzner-auction-hunter/run.sh"
+
+# ALL Environment Variables need to be available to be script running the Search. The source ~/.bash_profile is key here !
+ExecStart=/bin/bash -c 'source ~/.bash_profile && cd ~/containers/local/hetzner-auction-hunter && ./run.sh'
 #ExecStop=/bin/bash -c "${HOME}/containers/compose/hetzner-auction-hunter/stop.sh"
 
 [Install]
