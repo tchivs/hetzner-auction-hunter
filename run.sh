@@ -38,7 +38,7 @@ store_raw_data() {
     curl https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json | jq > ${APP_SEARCH_PATH}/live_data_sb.json
 
     # Copy file so that we always have a Historic View
-    cp ${APP_SEARCH_PATH}/live_data_sb.json ${APP_SEARCH_PATH}/${ltimestamp}-live_data_sb.json
+    cp ${APP_HOST_SEARCH_PATH}/live_data_sb.json ${APP_HOST_SEARCH_PATH}/${ltimestamp}-live_data_sb.json
 }
 
 ##################################
