@@ -454,25 +454,28 @@ def send_notification(notifier, server, send_payload):
 
         if html_html:
             if title_subject:
-                notifier.notify(message=msg, html=True, subject=title)
+                response = notifier.notify(message=msg, html=True, subject=title)
             elif title_title:
-                notifier.notify(message=msg, html=True, title=title)
+                response = notifier.notify(message=msg, html=True, title=title)
             else:
-                notifier.notify(message=msg, html=True)
+                response = notifier.notify(message=msg, html=True)
         elif html_pamo:
             if title_subject:
-                notifier.notify(message=msg, parse_mode="html", subject=title)
+                response = notifier.notify(message=msg, parse_mode="html", subject=title)
             elif title_title:
-                notifier.notify(message=msg, parse_mode="html", title=title)
+                response = notifier.notify(message=msg, parse_mode="html", title=title)
             else:
-                notifier.notify(message=msg, parse_mode="html")
+                response = notifier.notify(message=msg, parse_mode="html")
         else:
             if title_subject:
-                notifier.notify(message=msg, subject=title)
+                response = notifier.notify(message=msg, subject=title)
             elif title_title:
-                notifier.notify(message=msg, title=title)
+                response = notifier.notify(message=msg, title=title)
             else:
-                notifier.notify(message=msg)
+                response = notifier.notify(message=msg)
+
+        print(f"Send message with title <{title}> and message <{msg}>")
+        print(f"Response: OK Status {response.ok} , Response Errors: {response.errors}")
 
 
 if __name__ == "__main__":
@@ -829,6 +832,10 @@ if __name__ == "__main__":
         if analysis.fitRequirements():
             # Display Analysis
             print(analysis)
+
+            # Send Notification
+            #send_notification(notifier, analysis, cli_args.send_payload)
+
 
             if not cli_args.test_mode:
                 # Send Notification

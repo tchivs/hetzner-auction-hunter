@@ -154,26 +154,12 @@ perform_search() {
     lhahargs+=("${APP_RESULTS_PATH}/${ltimestamp}-${lsearchlabel}.txt")
     lhahargs+=("--provider")
     lhahargs+=("${HAH_PROVIDER}")
+
+    # Add other Arguments that have been passed to this Script
     for larg in "${lsearchcriteria}"
     do
         lhahargs+=("$larg")
     done
-    #lhahargs+=$lsearchcriteria
-    #lhahargs+=("--price")
-    #lhahargs+=("${lprice}")
-    #lhahargs+=("--exclude-tax")
-    #lhahargs+=("--ram")
-    #lhahargs+=("${lram}")
-    #lhahargs+=("--ecc")
-    #lhahargs+=("--disk-size")
-    #lhahargs+=("${ldisk}")
-
-    # If CPU search is set then include it
-    #if [[ -n "${lcpusearch}" ]]
-    #then
-    #    lhahargs+=("--match-cpu")
-    #    lhahargs+=("${lcpusearch}")
-    #fi
 
     # Decide how to Run
     if [[ "${RUN_MODE}" == "container" ]]
@@ -189,6 +175,7 @@ perform_search() {
         podman run --rm --replace \
         --name="${lcontainer}" \
         -v ${APP_HOST_DATA_PATH}:${APP_CONTAINER_DATA_PATH} \
+        --net ${CONTAINER_NETWORK} \
         --env-file "./.env" \
         hetzner-auction-hunter:latest \
         ${lhahargs[*]}
