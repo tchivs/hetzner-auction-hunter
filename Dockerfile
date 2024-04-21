@@ -13,10 +13,14 @@ RUN python3 -m venv "/opt/venv"
 ENV PATH="$PATH:/opt/venv"
 
 # Activate venv
-RUN source "/opt/venv/bin/activate"
+# This however requires BASH
+#RUN source "/opt/venv/bin/activate"
+
+# Try more POSIX compliant Solution
+RUN sh -c ". /opt/venv/bin/activate"
 
 # Set PATH Variable to Include venv
-ENV PATH="$PATH:/opt/venv"
+#ENV PATH="$PATH:/opt/venv"
 
 # Install required Packages
 RUN pip install --no-cache-dir -r /opt/app/requirements.txt
