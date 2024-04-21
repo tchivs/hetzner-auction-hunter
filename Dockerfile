@@ -1,4 +1,4 @@
-FROM python:3.10-slim-buster
+FROM python:3.11-slim-bookworm
 
 LABEL desc="hetzner-auction-hunter"
 LABEL website="https://github.com/danielskowronski/hetzner-auction-hunter"

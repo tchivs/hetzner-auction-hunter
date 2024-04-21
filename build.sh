@@ -17,7 +17,7 @@ targetplatform="linux/amd64"
 repository="https://github.com/luckylinux/hetzner-auction-hunter"
 
 # For Local Pulls
-repository="./app"
+#repository="./app"
 
 # Which CPUs to use during Build
 cpus="0,1,2,3"
