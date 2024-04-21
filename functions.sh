@@ -189,7 +189,7 @@ perform_search() {
         podman run --rm --replace \
         --name="${lcontainer}" \
         -v ${APP_HOST_DATA_PATH}:${APP_CONTAINER_DATA_PATH} \
-        --env-file "./.env"
+        --env-file "./.env" \
         hetzner-auction-hunter:latest \
         ${lhahargs[*]}
     elif [[ "${RUN_MODE}" == "local" ]]
