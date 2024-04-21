@@ -189,8 +189,7 @@ perform_search() {
         podman run --rm --replace \
         --name="${lcontainer}" \
         -v ${APP_HOST_DATA_PATH}:${APP_CONTAINER_DATA_PATH} \
-        -e "NOTIFIERS_PUSHOVER_USER"="${NOTIFIERS_PUSHOVER_USER}" \
-        -e "NOTIFIERS_PUSHOVER_TOKEN"="${NOTIFIERS_PUSHOVER_TOKEN}" \
+        --env-file "./.env"
         hetzner-auction-hunter:latest \
         ${lhahargs[*]}
     elif [[ "${RUN_MODE}" == "local" ]]
