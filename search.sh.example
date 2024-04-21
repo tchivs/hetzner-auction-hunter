@@ -20,9 +20,9 @@ fi
 
 # Examples
 #perform_search "search-abcde" "80" "128" "960" "1230v3,1275v5"
-#perform_search "search-abcde" --price "80" --exclude-tax --ram "128" --ecc --disk-each-size 960 --disk-count 2 --disk-quick --match-cpu "1230,1275" --exclude-cpu "1275v5"
-#perform_search "search-abcde" --price "80" --ram "64" --ecc --disk-each-size 960 --disk-count 2 --disk-quick --match-cpu "1230,1275" --exclude-cpu "1275v5"
-#perform_search "search-abcde" --price "80" --exclude-tax --ram "64" --ecc --disk-each-size 960 --disk-count 2 --disk-quick --match-cpu "1230,1275" --exclude-cpu "1275v5"
+#perform_search "search-abcde" --price "80" --exclude-tax --ram "128" --ecc --disk-general-each-size 960 --disk-general-count 2 --disk-quick --match-cpu "1230,1275" --exclude-cpu "1275v5"
+#perform_search "search-abcde" --price "80" --ram "64" --ecc --disk-general-each-size 960 --disk-general-count 2 --disk-quick --match-cpu "1230,1275" --exclude-cpu "1275v5"
+#perform_search "search-abcde" --price "80" --exclude-tax --ram "64" --ecc --disk-general-each-size 960 --disk-general-count 2 --disk-quick --match-cpu "1230,1275" --exclude-cpu "1275v5"
 #perform_search "search-abcde" --test-mode --id 2361035 --price "80" --exclude-tax --ram "64" --ecc --disk-quick --disk-quick-each-size 960 --disk-quick-count 2 --match-cpu "1230,1275" --exclude-cpu "1275v5"
 #perform_search "search-abcde" --test-mode --id "2361035,2330569" --price "800" --exclude-tax --ram "64" --ecc --disk-quick --disk-quick-each-size 960 --disk-quick-count 2 --match-cpu "1230,1275" --exclude-cpu "1275v5"
 #perform_search "search-abcde" --test-mode --id "2361035" --price "800" --exclude-tax --ram "64" --ecc --disk-quick --disk-quick-each-size 960 --disk-quick-count 2 
