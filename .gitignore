@@ -7,6 +7,9 @@ live_data_sb.json
 # Ignore Credentials in .env File
 .env
 
+# Ignore User defined Searches
+search.sh
+
 # Ignore Python venv
 venv/
 **/venv/
@@ -16,3 +19,8 @@ venv/
 data/
 **/data/
 **/data/*
+
+# Ignore Build Folder
+build/
+**/build/
+**/build/*

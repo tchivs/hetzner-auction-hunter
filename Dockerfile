@@ -3,9 +3,14 @@ FROM python:3.11-slim-bookworm
 LABEL desc="hetzner-auction-hunter"
 LABEL website="https://github.com/danielskowronski/hetzner-auction-hunter"
 
-COPY requirements.txt /requirements.txt
-RUN python3 -m pip install --no-cache-dir -r /requirements.txt
+# Copy Sources
+COPY app/ /opt/app
 
-COPY hah.py /hah.py
+# Change Directory
+WORKDIR "/opt/app"
 
+# Install Required Python Modules
+RUN python3 -m pip install --no-cache-dir -r /opt/app/requirements.txt
+
+# Run Command
 ENTRYPOINT [ "./hah.py" ]

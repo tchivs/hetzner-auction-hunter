@@ -7,7 +7,7 @@ engine=${1-"podman"}
 name="hetzner-auction-hunter"
 
 # Location of Build Sources
-buildfolder="hetzner-auction-hunter"
+buildfolder="build"
 
 # Target Platform
 targetplatform="linux/amd64"
@@ -17,7 +17,7 @@ targetplatform="linux/amd64"
 repository="https://github.com/luckylinux/hetzner-auction-hunter"
 
 # For Local Pulls
-#repository="./app"
+#repository="./"
 
 # Which CPUs to use during Build
 cpus="0,1,2,3"
@@ -31,7 +31,7 @@ opts=()
 
 # Options
 # Use --no-cache when e.g. updating docker-entrypoint.sh and images don't get updated as they should
-opts+=("--cpuset-cpus=${cpus}")
+#opts+=("--cpuset-cpus=${cpus}")
 #opts="--no-cache"
 
 # Mandatory Tag
@@ -50,21 +50,40 @@ fi
 # Create Folder if not Exist
 mkdir -p "${buildfolder}"
 
-# Check if GitHub Repository has already been cloned
-if [[ ! -d "${subfolder}" ]]
-then
-   # Clone Repository
-   git clone "${repository}.git" "${buildfolder}"
-fi
-
 # Change Folder
-cd ${buildfolder}
+cd ${buildfolder} || exit
 
-# Update Local Copy if needed
-git pull
+# Is this a git Repository already ?
+#gitstatus=$(git rev-parse --is-inside-work-tree 2>/dev/null)
+
+# Check if GitHub Repository has already been cloned
+#if [[ $gitstatus -ne 0 ]]
+#then
+#   # This is NOT a git Repository yet
+#   # Clone Repository
+#   git clone "${repository}.git" .
+#else
+#   # This may be a git Repository
+#   if [[ "${gitstatus}" == "true" ]]
+#   then
+#       # This is indeed a git Repository
+#       # Perform Updates
+#       git fetch
+#       git merge
+#   else
+#       # This is not a git Working Tree
+#       # Clone
+#       git clone "${repository}.git" .
+#   fi
+#fi
 
 # Copy requirements into the build context
-# cp <myfolder> . -r docker build . -t  project:latest
+cp -a ../Dockerfile .
+
+# Copy app part from scratch, making sure no old/dangling files are left
+rm -rf  ./app/*
+mkdir -p app
+cp -ar ../app/ .
 
 # Prefer Podman over Docker
 if [[ -n $(command -v podman) ]] && [[ "$engine" == "podman" ]]
@@ -81,4 +100,4 @@ else
 fi
 
 # Change Back to Current Path
-cd ${currentpath}
+cd ${currentpath} || exit

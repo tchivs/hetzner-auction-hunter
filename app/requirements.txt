@@ -1,0 +1,4 @@
+requests_file
+notifiers
+html2text
+texttable
