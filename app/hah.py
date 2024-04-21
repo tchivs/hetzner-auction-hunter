@@ -276,10 +276,10 @@ class Server:
         t = Texttable()
 
         # Get Terminal Width
-        terminalSize = os.get_terminal_size()
+        terminalColums = os.system("TERM=dumb tput cols")
 
         # Set Maximum Width for the Table
-        t.set_max_width(terminalSize.columns*0.9)
+        t.set_max_width(terminalColums*0.9)
 
 	    # Initialize Variable
         data = []
@@ -362,10 +362,10 @@ class Analysis(Server):
         t = Texttable()
 
         # Get Terminal Width
-        terminalSize = os.get_terminal_size()
+        terminalColums = os.system("TERM=dumb tput cols")
 
         # Set Maximum Width for the Table
-        t.set_max_width(terminalSize.columns*0.9)
+        t.set_max_width(terminalColums*0.9)
 
 	    # Initialize Variable
         data = []
