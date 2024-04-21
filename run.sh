@@ -35,7 +35,7 @@ store_raw_data() {
     local ltimestamp=$(date +%Y-%m-%d_%Hh%M)
 
     # Download and Store the Data in Cache only once, so we don't hit Hetzner Servers too hard
-    curl https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json | jq > ${APP_SEARCH_PATH}/live_data_sb.json
+    curl https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json | jq > ${APP_HOST_SEARCH_PATH}/live_data_sb.json
 
     # Copy file so that we always have a Historic View
     cp ${APP_HOST_SEARCH_PATH}/live_data_sb.json ${APP_HOST_SEARCH_PATH}/${ltimestamp}-live_data_sb.json
