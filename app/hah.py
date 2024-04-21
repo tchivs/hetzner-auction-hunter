@@ -106,38 +106,6 @@ class Server:
                 self.sp_inic = True
         # interesting fields left: setup_price, fixed_price, next_reduce*, serverDiskData, traffic, bandwidth
 
-        # Copy Field Names to self.match and self.enabled for easier Debugging
-        # self.match -> tells if the match has been found
-        # self.cmdline -> tells if the command line option setting this Parameter has been passed
-        # self.enabled -> tells if the the filtering based on this Parameter is enabled
-        #self.cmdline = dict()
-        self.matchcriteria = dict()
-        self.excludecriteria = dict()
-        self.matchresult = dict()
-        self.excluderesult = dict()
-        self.overallresult = dict()
-        for property in self.__dict__:
-        #for property in server_raw:
-            # Get Property Name
-            name = property
-
-            # Exclude self.match itself in order to prevent loops
-            # Exclude also other fields that might not be needed
-            if (name not in ["matchcriteria" , "excludecriteria" , "matchresult" , "excluderesult" , "overallresult"]) and (name not in ["server_raw"]):
-                # By default Criteria is Empty String
-                self.matchcriteria[name] = ""
-                self.excludecriteria[name] = ""
-
-                # By default all Servers Satisfy the Criteria
-                self.matchresult[name] = True
-                self.excluderesult[name] = True
-                self.overallresult[name] = True
-
-        # Print Dictionary for Debug
-        #print(self.cmdline)
-        #print(self.enabled)
-        #print(self.match)
-
     def get_url(self):
         return f"https://www.hetzner.com/sb?search={self.id}"
 
@@ -159,23 +127,19 @@ class Server:
 
     def __repr__(self):
         # Define Properties to Exclude from Print
-        excludeProperties = ["server_raw" , "matchcriteria" , "excludecriteria" , "matchresult" , "excluderesult" , "overallresult"]
+        excludeProperties = ["server_raw"]
 
         # Initialize Table
         t = Texttable()
 
-	# Initialize Variable
+	    # Initialize Variable
         data = []
 
         # Initialize Variable to Header
-        header = ["Property" , "Value" , "Match Criteria" , "Exclude Criteria" , "Match Result" , "Exclude Result" , "Overall Result"]
-        #text = "{:>20} {:<10} {:<10}".format("" , "Property", "Value"]
+        header = ["Property" , "Value"]
 
-        # Iterate over Properties to find those that need to be printed
-        #for property in self.__dict__:
-
-        # Limit the Representation to those keys in self.match (or self.exclude, self.result)
-        for property in self.matchcriteria:
+        # Loop over Class Properties
+        for property in self.__dict__:
             # Name is the same as property
             name = property
 
@@ -185,42 +149,8 @@ class Server:
             else:
                 value = None
 
-            if name in self.matchcriteria:
-                match_criteria = self.matchcriteria[name]
-            else:
-                match_criteria = None
-
-            if name in self.excludecriteria:
-                exclude_criteria = self.excludecriteria[name]
-            else:
-                exclude_criteria = None
-
-            #if name in self.cmdline:
-            #    cmdline_value = self.cmdline[name]
-            #else:
-            #    cmdline_value = "Undefined"
-
-            if name in self.matchresult:
-                match_result = self.matchresult[name]
-            else:
-                match_result = None
-
-            if name in self.excluderesult:
-                exclude_result = self.excluderesult[name]
-            else:
-                exclude_result = None
-
-            if name in self.overallresult:
-                overall_result = self.overallresult[name]
-            else:
-                overall_result = None
-
-
+            # Check if this is NOT a Key that must be excluded
             if name not in excludeProperties:
-                #mystr = f"{:<20} {:<10} {:<10}\n"
-                #print(f"{name} -> {value}")
-                #text += f"{name} -> {value}\n"
-                #text += mystr.format("" , name, value)
                 data.append([name , value , match_criteria , exclude_criteria , match_result , exclude_result , overall_result])
 
         # Add the Headers to the Table
@@ -239,11 +169,109 @@ class Server:
 
 # Define Analyis Class that Extends Server
 class Analysis(Server):
+    ANALYSIS_FIELDS_NAME = ["matchcriteria" , "excludecriteria" , "matchresult" , "excluderesult" , "overallresult"]
+    ANALYSIS_FIELDS_DESCRIPTION = ["Matching Criteria" , "Exclusion Criteria" , "Match Result" , "Exclude Result" , "Overall Result"]
+
     def __init__(self, server_raw , tax_percent=0):
         # Call Parent Class Constructor
         Server.__init__(self, server_raw , tax_percent)
 
+        # Copy Field Names to the following Fields for easier Debugging
+        # self.matchcriteria: tells what the match criteria is (default or set via command line)
+        # self.excludecriteria: tells what the exclude criteria is (default or set via command line)
+        # self.matchresult: tells if the match criteria is satisfied
+        # self.excluderesult: tells if the the excluding criteria is satisfied
+        # self.overallresult: tells if the match criteria is satisfied
+        self.matchcriteria = dict()
+        self.excludecriteria = dict()
+        self.matchresult = dict()
+        self.excluderesult = dict()
+        self.overallresult = dict()
 
+        for property in self.__dict__:
+            name = property
+
+            # Exclude the new Fields that we aree introducting
+            if (name not in self.ANALYSIS_FIELDS_NAME) and (name not in ["server_raw"]):
+                # By default Criteria is Empty String
+                self.matchcriteria[name] = ""
+                self.excludecriteria[name] = ""
+
+                # By default all Servers Satisfy the Criteria
+                self.matchresult[name] = True
+                self.excluderesult[name] = True
+                self.overallresult[name] = True
+
+    def __repr__(self):
+        # Define Properties to Exclude from Print
+        excludeProperties = ["server_raw" , *self.ANALYSIS_FIELDS_NAME]
+
+        # Initialize Table
+        t = Texttable()
+
+	    # Initialize Variable
+        data = []
+
+        # Initialize Variable to Header
+        header = ["Server Property" , "Server Value" , *(self.ANALYSIS_FIELDS_DESCRIPTION)]
+        #header.extend(self.ANALYSIS_FIELDS_DESCRIPTION)
+
+        # Limit the Representation to those keys in self.matchcriteria (or self.excludecriteria, self.matchresult, self.excluderesult, self.overallresult)
+        for property in self.matchcriteria:
+            # Name is the same as property
+            name = property
+
+            # Check if Property exists in Class
+            if property in self.__dict__:
+                value = getattr(self, property)
+            else:
+                value = None
+
+            # Check if Key exists in Dictionary
+            if name in self.matchcriteria:
+                match_criteria = self.matchcriteria[name]
+            else:
+                match_criteria = None
+
+            # Check if Key exists in Dictionary
+            if name in self.excludecriteria:
+                exclude_criteria = self.excludecriteria[name]
+            else:
+                exclude_criteria = None
+
+            # Check if Key exists in Dictionary
+            if name in self.matchresult:
+                match_result = self.matchresult[name]
+            else:
+                match_result = None
+
+            # Check if Key exists in Dictionary
+            if name in self.excluderesult:
+                exclude_result = self.excluderesult[name]
+            else:
+                exclude_result = None
+
+            # Check if Key exists in Dictionary
+            if name in self.overallresult:
+                overall_result = self.overallresult[name]
+            else:
+                overall_result = None
+
+            # Check if this is NOT a Key that must be excluded
+            if name not in excludeProperties:
+                data.append([name , value , match_criteria , exclude_criteria , match_result , exclude_result , overall_result])
+
+        # Add the Headers to the Table
+        t.add_rows([header] , header=True)
+
+        # Add all the Data to the Table
+        t.add_rows(data , header=False)
+
+        # Generate String
+        str = t.draw()
+
+        # Return everything indented by a tab
+        return '\t'.join(('\n'+str.lstrip()).splitlines(True))
 
 def send_notification(notifier, server, send_payload):
     if notifier == None:
@@ -397,27 +425,7 @@ if __name__ == "__main__":
 
     for server_raw in servers:
         tax = cli_args.tax[0] if not cli_args.exclude_tax else 0.0
-        server = Server(server_raw, tax)
-
-        # Debug
-        #print(server)
-
-        # Store Command Line Arguments in Server class
-        #for key in server.cmdline:
-        #    name = key
-        #
-        #    # If value is also in the list of argparse
-        #    if key in cli_args.__dict__:
-        #        value = getattr(cli_args , name)
-        #        #print(f"Command Line Option: {name} -> {value}")
-        #        if isinstance(value , list):
-        #            # Get only the first element
-        #            value = value[0]
-        #
-        #        # Only store if the key already exist
-        #        if name in server.cmdline:
-        #            server.cmdline[name] = value
-
+        analysis = Analysis(server_raw, tax)
 
         # Store Command Line Arguments in Server class
         # Store as either "Match" or "Exclude" depending on the Argument
@@ -431,9 +439,9 @@ if __name__ == "__main__":
                 name = key.replace("match_" , "")
 
                 # Only store if the key already exist
-                if name in server.matchcriteria:
+                if name in analysis.matchcriteria:
                     # Add key to match
-                    server.matchcriteria[name] = value
+                    analysis.matchcriteria[name] = value
 
             # Check for --exclude
             if ("exclude" in key):
@@ -441,97 +449,91 @@ if __name__ == "__main__":
                 name = key.replace("exclude_" , "")
                 print(name)
                 # Only store if the key already exist
-                if name in server.excludecriteria:
+                if name in analysis.excludecriteria:
                     # Add key to exclude
-                    server.excludecriteria[name] = value
-
-                #print(f"Command Line Option: {name} -> {value}")
-                #if isinstance(value , list):
-                #    # Get only the first element
-                #    value = value[0]
-
+                    analysis.excludecriteria[name] = value
 
         if cli_args.debug:
             print(json.dumps(server_raw))
-        if not cli_args.test_mode and str(server.id) in idsProcessed:
+        if not cli_args.test_mode and str(analysis.id) in idsProcessed:
             continue
 
         datacenter_matches = False if cli_args.datacenter else True
-        if cli_args.datacenter is not None and cli_args.datacenter[0] in server.datacenter:
+        if cli_args.datacenter is not None and cli_args.datacenter[0] in analysis.datacenter:
             datacenter_matches = True
 
         # Store result inside Class
-        server.matchresult['datacenter'] = datacenter_matches
+        analysis.matchresult['datacenter'] = datacenter_matches
 
-        price_matches = server.price <= cli_args.price[0] if cli_args.price else True
+        price_matches = analysis.price <= cli_args.price[0] if cli_args.price else True
 
         # Store result inside Class
-        server.matchresult['price'] = price_matches
+        analysis.matchresult['price'] = price_matches
 
-        cpu_count_matches = server.cpu_count >= cli_args.cpu_count[
+        cpu_count_matches = analysis.cpu_count >= cli_args.cpu_count[
             0] if cli_args.cpu_count else True
 
         # Store result inside Class
-        server.matchresult['cpu_count'] = cpu_count_matches
+        analysis.matchresult['cpu_count'] = cpu_count_matches
 
-        ram_size_matches = server.ram_size >= cli_args.ram_size[0] if cli_args.ram_size else True
+        ram_size_matches = analysis.ram_size >= cli_args.ram_size[0] if cli_args.ram_size else True
 
         # Store result inside Class
-        server.matchresult['ram_size'] = ram_size_matches
+        analysis.matchresult['ram_size'] = ram_size_matches
 
-        disk_count_matches = server.disk_count >= cli_args.disk_count[
+        disk_count_matches = analysis.disk_count >= cli_args.disk_count[
             0] if cli_args.disk_count else True
 
         # Store result inside Class
-        server.matchresult['disk_count'] = disk_count_matches
+        analysis.matchresult['disk_count'] = disk_count_matches
 
-        disk_total_size_matches = server.disk_total_size >= cli_args.disk_total_size[
+        disk_total_size_matches = analysis.disk_total_size >= cli_args.disk_total_size[
             0] if cli_args.disk_total_size else True
-        disk_each_size_matches = server.get_smallest_disk_size(
+        disk_each_size_matches = analysis.get_smallest_disk_size(
         ) >= cli_args.disk_each_size[0] if cli_args.disk_each_size else True
-        disk_quick_matches = server.has_quick_disk() if cli_args.disk_quick else True
+        disk_quick_matches = analysis.has_quick_disk() if cli_args.disk_quick else True
 
         # Store result inside Class
-        server.matchresult['disk_total_size'] = disk_total_size_matches
-        server.matchresult['disk_each_size'] = disk_each_size_matches
-        server.matchresult['disk_quick'] = disk_quick_matches
+        analysis.matchresult['disk_total_size'] = disk_total_size_matches
+        analysis.matchresult['disk_each_size'] = disk_each_size_matches
+        analysis.matchresult['disk_quick'] = disk_quick_matches
 
 
-        sp_hw_raid_matches = server.sp_hw_raid if cli_args.sp_hw_raid else True
-
-        # Store result inside Class
-        server.matchresult['sp_hw_raid'] = sp_hw_raid_matches
-
-
-        sp_red_psu_matches = server.sp_red_psu if cli_args.sp_red_psu else True
+        sp_hw_raid_matches = analysis.sp_hw_raid if cli_args.sp_hw_raid else True
 
         # Store result inside Class
-        server.matchresult['sp_red_psu'] = sp_red_psu_matches
+        analysis.matchresult['sp_hw_raid'] = sp_hw_raid_matches
 
 
-        sp_ecc_matches = server.sp_ecc if cli_args.sp_ecc else True
-
-        # Store result inside Class
-        server.matchresult['sp_ecc'] = sp_ecc_matches
-
-
-        sp_gpu_matches = server.sp_gpu if cli_args.sp_gpu else True
+        sp_red_psu_matches = analysis.sp_red_psu if cli_args.sp_red_psu else True
 
         # Store result inside Class
-        server.matchresult['sp_gpu'] = sp_gpu_matches
+        analysis.matchresult['sp_red_psu'] = sp_red_psu_matches
 
 
-        sp_ipv4_matches = server.sp_ipv4 if cli_args.sp_ipv4 else True
-
-        # Store result inside Class
-        server.matchresult['sp_ipv4'] = sp_ipv4_matches
-
-
-        sp_inic_matches = server.sp_inic if cli_args.sp_inic else True
-
+        sp_ecc_matches = analysis.sp_ecc if cli_args.sp_ecc else True
 
         # Store result inside Class
-        server.matchresult['sp_inic'] = sp_inic_matches
+        analysis.matchresult['sp_ecc'] = sp_ecc_matches
+
+
+        sp_gpu_matches = analysis.sp_gpu if cli_args.sp_gpu else True
+
+        # Store result inside Class
+        analysis.matchresult['sp_gpu'] = sp_gpu_matches
+
+
+        sp_ipv4_matches = analysis.sp_ipv4 if cli_args.sp_ipv4 else True
+
+        # Store result inside Class
+        analysis.matchresult['sp_ipv4'] = sp_ipv4_matches
+
+
+        sp_inic_matches = analysis.sp_inic if cli_args.sp_inic else True
+
+
+        # Store result inside Class
+        analysis.matchresult['sp_inic'] = sp_inic_matches
 
 
 
@@ -546,10 +548,10 @@ if __name__ == "__main__":
 
             # Try to see if any Match allowed is found
             for cpu in selected_cpu_matches:
-                if cpu in server.cpu_description.lower():
+                if cpu in analysis.cpu_description.lower():
                     # Found match
                     cpu_description_matches = True
-                    #print(f"Server {server.id} matches requested CPU <{cli_args.match_cpu[0]}> (Server has CPU {server.cpu_description})")
+                    #print(f"Server {analysis.id} matches requested CPU <{cli_args.match_cpu[0]}> (Server has CPU {analysis.cpu_description})")
         else:
             # Not Required
             cpu_description_matches = True
@@ -565,51 +567,51 @@ if __name__ == "__main__":
 
             # Try to see if any Match allowed is found
             for cpu in selected_cpu_exclusions:
-                if cpu in server.cpu_description.lower():
+                if cpu in analysis.cpu_description.lower():
                     # Found exclusion match
                     cpu_description_matches = False
-                    #print(f"Server {server.id} MUST BE EXCLUDED since CPU <{cpu}> is in EXCLUSION LIST ({cli_args.match_cpu[0]}) - Server has CPU {server.cpu_description})")
+                    #print(f"Server {analysis.id} MUST BE EXCLUDED since CPU <{cpu}> is in EXCLUSION LIST ({cli_args.match_cpu[0]}) - Server has CPU {analysis.cpu_description})")
         else:
             # Not Required
             cpu_description_excludes = True
 
 
         # Store result inside Class
-        server.matchresult['cpu_description'] = cpu_description_matches
-        server.excluderesult['cpu_description'] = cpu_description_excludes
+        analysis.matchresult['cpu_description'] = cpu_description_matches
+        analysis.excluderesult['cpu_description'] = cpu_description_excludes
 
-        print(server)
+        print(analysis)
 
         if cpu_description_matches:
-           print(f"Server {server.id} matches CPU Matching Criteria (Server has CPU {server.cpu_description})")
-           print(server)
+           print(f"Server {analysis.id} matches CPU Matching Criteria (Server has CPU {analysis.cpu_description})")
+           print(analysis)
 
         # Update the Overall Criterials (XXX_matches && XXX_excludes)
-        server.computeOverallResult()
+        analysis.computeOverallResult()
 
         # Check if Server Satisfies all Criteria of Match+Exclude
-        if server.fitRequirements():
+        if analysis.fitRequirements():
         #if price_matches and disk_count_matches and disk_total_size_matches and disk_each_size_matches and \
         #        disk_quick_matches and sp_hw_raid_matches and sp_red_psu_matches and cpu_count_matches and \
         #        ram_size_matches and sp_ecc_matches and sp_gpu_matches and sp_ipv4_matches and sp_inic_matches and \
         #        datacenter_matches and cpu_description_matches:
 
             # Display Server
-            print(server)
+            print(analysis)
 
             #print("TEST")
-            #print(server.get_header())
+            #print(analysis.get_header())
             if not cli_args.test_mode:
-                send_notification(notifier, server, cli_args.send_payload)
-                f.write(","+str(server.id))
+                send_notification(notifier, analysis, cli_args.send_payload)
+                f.write(","+str(analysis.id))
 
                 # Process Server first in the Database
-                #print(server)
+                #print(analysis)
 
                 # If Server is not Already in the Database with the same Price
                 #pass
-                #    #send_notification(notifier, server, cli_args.send_payload)
-                #    #f.write(","+str(server.id))
+                #    #send_notification(notifier, analysis, cli_args.send_payload)
+                #    #f.write(","+str(analysis.id))
 
     if not cli_args.test_mode:
         f.close()
