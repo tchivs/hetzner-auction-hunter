@@ -17,39 +17,69 @@ The price displayed on hetzner.com by default includes monthly rate for IPv4 add
 ## usage
 
 ```
-usage: hah.py [-h] [--data-url DATA_URL] [--provider PROVIDER] [--tax TAX] [--price PRICE] [--disk-count DISK_COUNT] [--disk-size DISK_SIZE] [--disk-min-size DISK_MIN_SIZE] [--disk-quick] [--hw-raid] [--red-psu] [--gpu] [--ipv4] [--inic]
-              [--cpu-count CPU_COUNT] [--ram RAM] [--ecc] [--dc DC] [-f [F]] [--exclude-tax] [--test-mode] [--debug] [--send-payload]
+usage: hah.py [-h] [--data-url DATA_URL] [--provider PROVIDER] [--tax TAX] [--price PRICE] [--id IDS] [--disk-general-count DISK_GENERAL_COUNT] [--disk-general-total-size DISK_GENERAL_TOTAL_SIZE] [--disk-general-each-size DISK_GENERAL_EACH_SIZE] [--disk-quick] [--disk-quick-count DISK_QUICK_COUNT] [--disk-quick-total-size DISK_QUICK_TOTAL_SIZE] [--disk-quick-each-size DISK_QUICK_EACH_SIZE] [--disk-hdd] [--disk-hdd-count DISK_HDD_COUNT] [--disk-hdd-total-size DISK_HDD_TOTAL_SIZE] [--disk-hdd-each-size DISK_HDD_EACH_SIZE] [--disk-ssd] [--disk-ssd-count DISK_SSD_COUNT] [--disk-ssd-total-size DISK_SSD_TOTAL_SIZE] [--disk-ssd-each-size DISK_SSD_EACH_SIZE] [--disk-nvme] [--disk-nvme-count DISK_NVME_COUNT] [--disk-nvme-total-size DISK_NVME_TOTAL_SIZE] [--disk-nvme-each-size DISK_NVME_EACH_SIZE] [--hw-raid] [--red-psu] [--gpu] [--ipv4] [--inic]
+[--cpu-count CPU_COUNT] [--ram RAM] [--ecc] [--dc DC] [-f [F]] [--exclude-tax] [--test-mode] [--debug] [--send-payload]
 
 hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library
 
 options:
-  -h, --help            show this help message and exit
-  --data-url DATA_URL   URL to live_data_sb.json
-  --provider PROVIDER   Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html
-  --tax TAX             tax rate (VAT) in percents, defaults to 19 (Germany)
-  --price PRICE         max price (€)
-  --disk-count DISK_COUNT
-                        min disk count
-  --disk-size DISK_SIZE
-                        min disk capacity (GB)
-  --disk-min-size DISK_MIN_SIZE
-                        min disk capacity per disk (GB)
-  --disk-quick          require SSD/NVMe
-  --hw-raid             require Hardware RAID
-  --red-psu             require Redundant PSU
-  --gpu                 require discrete GPU
-  --ipv4                require IPv4
-  --inic                require Intel NIC
-  --cpu-count CPU_COUNT
-                        min CPU count
-  --ram RAM             min RAM (GB)
-  --ecc                 require ECC memory
-  --dc DC               datacenter (FSN1-DC15) or location (FSN)
-  -f [F]                state file
-  --exclude-tax         exclude tax from output price
-  --test-mode           do not send actual messages and ignore state file
-  --debug               debug mode
-  --send-payload        send server data as JSON payload
+  # Program Options
+  -f [F]                                                  state file
+  -h, --help                                              show this help message and exit
+  --data-url DATA_URL                                     URL to live_data_sb.json
+  --provider PROVIDER                                     Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html
+  --exclude-tax                                           exclude tax from output price
+  --test-mode                                             do not send actual messages and ignore state file
+  --debug                                                 debug mode
+  --send-payload                                          send server data as JSON payload
+
+  # General Server Options
+  --cpu-count CPU_COUNT                                   min CPU count (Sockets, not Cores)      
+  --match-cpu CPU_LIST                                    match Server based on a comma-separated List of CPUs
+  --exclude-cpu CPU_LIST                                  exclude Server based on a comma-separated List of CPUs     
+  --ram RAM                                               min RAM amount in GB
+  --ecc                                                   require ECC memory
+  --dc DC                                                 datacenter (FSN1-DC15) or location (FSN)
+  --tax TAX                                               tax rate (VAT) in percent, defaults to 19 (Germany)
+  --id                                                    server ID to match against a comma-separated List
+  --price PRICE                                           max price in EUR
+
+  # General Disk Options
+  --disk-general-count DISK_GENERAL_COUNT                 min disk count (considers only HDD+SSD+NVMe)         
+  --disk-general-total-size DISK_GENERAL_TOTAL_SIZE       min total disk capacity in GB (considers only HDD+SSD+NVMe)                
+  --disk-general-each-size DISK_GENERAL_EACH_SIZE         min disk capacity per disk in GB (considers only HDD+SSD+NVMe)  
+
+  # Quick (SSD + NVMe) Disk Options
+  --disk-quick                                            require SSD/NVMe
+  --disk-quick-count DISK_QUICK_COUNT                     min disk count (considers only SSD+NVMe)         
+  --disk-quick-total-size DISK_QUICK_TOTAL_SIZE           min total disk capacity in GB (considers only SSD+NVMe)                
+  --disk-quick-each-size DISK_QUICK_EACH_SIZE             min disk capacity per disk in GB (considers only SSD+NVMe) 
+
+  # HDD Options
+  --disk-hdd                                              require HDD
+  --disk-hdd-count DISK_HDD_COUNT                         min disk count (considers only HDD)         
+  --disk-hdd-total-size DISK_HDD_TOTAL_SIZE               min total disk capacity in GB (considers only HDD)                
+  --disk-hdd-each-size DISK_HDD_EACH_SIZE                 min disk capacity per disk in GB (considers only HDD) 
+
+  # SSD Options
+  --disk-ssd                                              require SSD
+  --disk-ssd-count DISK_SSD_COUNT                         min disk count (considers only SSD)         
+  --disk-ssd-total-size DISK_SSD_TOTAL_SIZE               min total disk capacity in GB (considers only SSD)                
+  --disk-ssd-each-size DISK_SSD_EACH_SIZE                 min disk capacity per disk in GB (considers only SSD) 
+
+  # NVME Options
+  --disk-nvme                                             require NVME 
+  --disk-nvme-count DISK_NVME_COUNT                       min disk count (considers only NVMe)         
+  --disk-nvme-total-size DISK_NVME_TOTAL_SIZE             min total disk capacity in GB (considers only NVMe)                
+  --disk-nvme-each-size DISK_NVME_EACH_SIZE               min disk capacity per disk in GB (considers only NVMe) 
+
+  # Special Options for the Server
+  --hw-raid                                               require Hardware RAID
+  --red-psu                                               require Redundant PSU
+  --gpu                                                   require discrete GPU
+  --ipv4                                                  require IPv4
+  --inic                                                  require Intel NIC
+
 ```
 
 Since there are way too many combinations of providers and their parameters to support as CLI args, you must pass `--provider PROVIDER` as defined on [Notifiers providers list](https://notifiers.readthedocs.io/en/latest/providers/index.html) and export all relevant ENV variables as per [Notifiers usage guide](https://notifiers.readthedocs.io/en/latest/usage.html?highlight=NOTIFIERS_#environment-variables). 

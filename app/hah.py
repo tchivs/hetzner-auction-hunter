@@ -8,6 +8,12 @@ import argparse
 import html2text
 import base64
 
+# Import sys Python Module
+import sys
+
+# Import os Python Module
+import os
+
 # Use TextTable
 from texttable import Texttable
 
@@ -16,18 +22,28 @@ import sqlite3
 
 # Define Server Class
 class Server:
+    # Exclude Properties from Printing / Analysis
+    SERVER_PRINT_EXCLUDE_PROPERTIES = ["server_raw"]
+
     def computeOverallResult(self):
         # For every key in the Dictionary compute the logical AND between match and exclude
         for key in self.matchresult:
             # Store in Result
-            self.overallresult[key] = self.matchresult[key] and self.excluderesult[key]
+            self.overallresult[key] = all([self.matchresult[key] , self.excluderesult[key]])
 
     def fitRequirements(self):
         # Compute Overall Result just in case the User forgot to do it
         self.computeOverallResult()
 
+        # Using for loop
         # If all keys in self.overallresult are true, then it's OK
-        return all(self.overallresult)
+        #result = True
+        #for key in self.overallresult:
+        #    if self.overallresult[key] == False:
+        #        result = False
+
+        # Return Result
+        return all(self.overallresult.values())
 
     def get_disk_description(self):
         disk_descriptors = [
@@ -45,24 +61,111 @@ class Server:
         sata_count = len(self.server_raw.get(
             "serverDiskData", []).get("sata", []))
 
-        # Store the found value
-        self.disk_quick = nvme_count+sata_count > 0
+        # Count how many Quick Disks are installed
+        status = nvme_count+sata_count > 0
 
         # Return Value
-        return self.disk_quick
+        return status
 
-    def get_smallest_disk_size(self):
-        general_drives = self.disk_map.get("general", [])
-        if len(general_drives) > 0:
-            smallest_drive = min(general_drives)
+    def has_hdd_disk(self):
+        hdd_count = len(self.server_raw.get(
+            "serverDiskData", []).get("hdd", []))
+
+        # Count how many HDD Disks are installed
+        status = hdd_count > 0
+
+        # Return Value
+        return status
+
+    def has_ssd_disk(self):
+        ssd_count = len(self.server_raw.get(
+            "serverDiskData", []).get("sata", []))
+
+        # Count how many HDD Disks are installed
+        status = ssd_count > 0
+
+        # Return Value
+        return status
+
+    def has_nvme_disk(self):
+        nvme_count = len(self.server_raw.get(
+            "serverDiskData", []).get("nvme", []))
+
+        # Count how many Quick Disks are installed
+        status = nvme_count > 0
+
+        # Return Value
+        return status
+
+    def get_drive_sizes(self , disk_type = "general"):
+        # Each Parameter Must be Calculated Invividually
+        # "general" does NOT contain the number of Items Corresponding to each Disk !
+        hdd_size = self.disk_map.get("hdd", [])
+        ssd_size = self.disk_map.get("sata", [])
+        nvme_size = self.disk_map.get("nvme", [])
+
+        # Initialize Variable
+        drive_sizes = []
+
+        # !! IMPORTANT !!  affecting the variable (drive_sizes = hdd_size to start with) causes the creation of a Pass-by-Reference Issue
+        # We must ALWAYS use .extend() also for the first line of each if/else block, in this way we force a copy.
+        # Alternatively initialize disk_sizes in the if/else block as drive_sizes = hdd_size.copy() in the first line of each statement.
+        if disk_type == "general":
+            drive_sizes = hdd_size.copy()
+            drive_sizes.extend(ssd_size)
+            drive_sizes.extend(nvme_size)
+
+        elif disk_type == "quick":
+            drive_sizes = ssd_size.copy()
+            drive_sizes.extend(nvme_size)
+
+        elif disk_type == "hdd":
+            drive_sizes.extend(hdd_size)
+
+        elif disk_type == "sata" or disk_type == "ssd":
+            drive_sizes.extend(ssd_size)
+
+        elif disk_type == "nvme":
+            drive_sizes.extend(nvme_size)
+
+        # Return Value
+        return drive_sizes
+
+    def get_disk_count(self , disk_type = "general"):
+        # Each Parameter Must be Calculated Invividually
+        # "general" does NOT contain the number of Items Corresponding to each Disk !
+
+        # Get Drive Sizes
+        drive_sizes = self.get_drive_sizes(disk_type)
+
+        # Return Number of Elements Found
+        return len(drive_sizes)
+
+    def get_total_disk_size(self , disk_type = "general"): 
+        # Get drive Sizes
+        drive_sizes = self.get_drive_sizes(disk_type)
+
+        # Check that there is at least 1 Disk
+        if len(drive_sizes) > 0:
+            sum_drives = sum(drive_sizes)
+        else:
+            sum_drives = -1
+
+        # Return Value
+        return sum_drives
+
+    def get_smallest_disk_size(self  , disk_type = "general"):
+        # Get drive Sizes
+        drive_sizes = self.get_drive_sizes(disk_type)
+
+        # Check that there is at least 1 Disk
+        if len(drive_sizes) > 0:
+            smallest_drive = min(drive_sizes)
         else:
             smallest_drive = -1
 
-        # Store the found value
-        self.disk_each_size = smallest_drive
-
         # Return Value
-        return self.disk_each_size
+        return smallest_drive
 
     def __init__(self, server_raw, tax_percent=0):
         self.server_raw = server_raw
@@ -70,6 +173,10 @@ class Server:
 
         self.id = server_raw.get("id", 0)
         self.datacenter = server_raw.get("datacenter", "UNKNOWN_DATACENTER")
+
+        self.price_net = server_raw.get("price", 0.0)
+        self.price_gross = self.price_net*(100+self.tax_percent)/100
+
         self.price = server_raw.get("price", 0.0)*(100+self.tax_percent)/100
 
         self.ram_size = server_raw.get("ram_size", 0)
@@ -78,12 +185,44 @@ class Server:
         self.cpu_count = server_raw.get("cpu_count", 0)
         self.cpu_description = server_raw.get("cpu", "UNKNOWN_CPU")
 
-        self.disk_count = server_raw.get("hdd_count", 0)
-        self.disk_total_size = server_raw.get("hdd_size", 0)
+        # !! IMPORTANT !! Make sure, where self.disk_map is used inside other functions, to NOT inadvertently create a reference link.
+        # This would result in the number of disks in self.disk_map to increase dramatically
         self.disk_map = server_raw.get(
             "serverDiskData", {"nvme": [], "sata": [], "hdd": [], "general": []})
-        self.disk_quick = self.has_quick_disk()
+
+        # Store Disk Description
         self.disk_description = self.get_disk_description()
+        
+        # These Variables keep into account the General (HDD + SSD/NVME) Disk Type
+        self.disk_general_count = self.get_disk_count('general')
+        self.disk_general_total_size = self.get_total_disk_size('general')
+        self.disk_general_each_size = self.get_smallest_disk_size('general')
+
+        # These Variables keep into account only the Quick (SSD/NVME) Disk Type only
+        self.disk_quick = self.has_quick_disk()
+        self.disk_quick_count = self.get_disk_count('quick')
+        self.disk_quick_total_size = self.get_total_disk_size('quick')
+        self.disk_quick_each_size = self.get_smallest_disk_size('quick')
+
+        # These Variables keep into account only the HDD Disk Type only
+        self.disk_hdd = self.has_hdd_disk()
+        self.disk_hdd_count = self.get_disk_count('hdd')
+        self.disk_hdd_total_size = self.get_total_disk_size('hdd')
+        self.disk_hdd_each_size = self.get_smallest_disk_size('hdd')
+
+        # These Variables keep into account only the SSD Disk Type only
+        self.disk_ssd = self.has_ssd_disk()
+        self.disk_ssd_count = self.get_disk_count('ssd')
+        self.disk_ssd_total_size = self.get_total_disk_size('ssd')
+        self.disk_ssd_each_size = self.get_smallest_disk_size('ssd')
+
+        # These Variables keep into account only the NVME Disk Type only
+        self.disk_nvme = self.has_nvme_disk()
+        self.disk_nvme_count = self.get_disk_count('nvme')
+        self.disk_nvme_total_size = self.get_total_disk_size('nvme')
+        self.disk_nvme_each_size = self.get_smallest_disk_size('nvme')
+        
+        
 
         self.sp_hw_raid = False
         self.sp_red_psu = False
@@ -107,7 +246,11 @@ class Server:
         # interesting fields left: setup_price, fixed_price, next_reduce*, serverDiskData, traffic, bandwidth
 
     def get_url(self):
-        return f"https://www.hetzner.com/sb?search={self.id}"
+        # This seems to be the old style URL which appears to not be working anymore
+        #return f"https://www.hetzner.com/sb?search={self.id}"
+
+        # This seems to work
+        return f"https://www.hetzner.com/sb/#search={self.id}"
 
     def get_header(self):
         msg = f"Hetzner server #{self.id} in {self.datacenter} for {self.price}€"
@@ -127,10 +270,16 @@ class Server:
 
     def __repr__(self):
         # Define Properties to Exclude from Print
-        excludeProperties = ["server_raw"]
+        excludeProperties = SERVER_PRINT_EXCLUDE_PROPERTIES
 
         # Initialize Table
         t = Texttable()
+
+        # Get Terminal Width
+        terminalSize = os.get_terminal_size()
+
+        # Set Maximum Width for the Table
+        t.set_max_width(terminalSize.columns*0.9)
 
 	    # Initialize Variable
         data = []
@@ -161,6 +310,9 @@ class Server:
 
         # Generate String
         str = t.draw()
+
+        # Also add Server URL
+        str += "\nServer URL: " + self.get_url() + "\n\n"
 
         # Return everything indented by a tab
         return '\t'.join(('\n'+str.lstrip()).splitlines(True))
@@ -208,6 +360,12 @@ class Analysis(Server):
 
         # Initialize Table
         t = Texttable()
+
+        # Get Terminal Width
+        terminalSize = os.get_terminal_size()
+
+        # Set Maximum Width for the Table
+        t.set_max_width(terminalSize.columns*0.9)
 
 	    # Initialize Variable
         data = []
@@ -269,6 +427,9 @@ class Analysis(Server):
 
         # Generate String
         str = t.draw()
+
+        # Also add Server URL
+        str += "\nServer URL: " + self.get_url() + "\n\n"
 
         # Return everything indented by a tab
         return '\t'.join(('\n'+str.lstrip()).splitlines(True))
@@ -334,18 +495,80 @@ if __name__ == "__main__":
     parser.add_argument('--price', dest='price' , nargs=1, required=False, type=int,
                         help='max price (€)')
 
-    parser.add_argument('--disk-count',  dest='disk_count' , nargs=1, required=False, type=int,
+    # Match a Specific Server ID (Useful for debugging)
+    parser.add_argument('--id', dest='id' , nargs=1, required=False, type=str,
+                        help='Server IDs (comma separated)')
+
+
+    # Disk Parameters
+
+    # General (ALL Drive Type/Sizes Together)
+    parser.add_argument('--disk-general-count',  dest='disk_general_count' , nargs=1, required=False, type=int,
                         default=[1],
                         help='min disk count')
 
-    parser.add_argument('--disk-total-size', dest='disk_total_size' , nargs=1, required=False, type=int,
+    parser.add_argument('--disk-general-total-size', dest='disk_general_total_size' , nargs=1, required=False, type=int,
                         help='min disk capacity in total (GB)')
 
-    parser.add_argument('--disk-each-size', dest='disk_each_size' ,  nargs=1, required=False, type=int,
+    parser.add_argument('--disk-general-each-size', dest='disk_general_each_size' ,  nargs=1, required=False, type=int,
                         help='min disk capacity per each disk (GB)')
 
+
+    # Specific Search Option for NVMe/SSD
     parser.add_argument('--disk-quick', dest='disk_quick' , action='store_true',
                         help='require SSD/NVMe')
+
+    parser.add_argument('--disk-quick-count',  dest='disk_quick_count' , nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min SSD/NVMe disk count')
+
+    parser.add_argument('--disk-quick-total-size', dest='disk_quick_total_size' , nargs=1, required=False, type=int,
+                        help='min SSD/NVMe disk capacity in total (GB)')
+
+    parser.add_argument('--disk-quick-each-size', dest='disk_quick_each_size' , nargs=1, required=False, type=int,
+                        help='min SSD/NVMe disk capacity per each disk (GB)')
+
+    # Specific Search Option for HDD Only
+    parser.add_argument('--disk-hdd', dest='disk_hdd' , action='store_true',
+                        help='require HDD')
+
+    parser.add_argument('--disk-hdd-count',  dest='disk_hdd_count' , nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min HDD disk count')
+
+    parser.add_argument('--disk-hdd-total-size', dest='disk_hdd_total_size' , nargs=1, required=False, type=int,
+                        help='min HDD disk capacity in total (GB)')
+
+    parser.add_argument('--disk-hdd-each-size', dest='disk_hdd_each_size' , nargs=1, required=False, type=int,
+                        help='min HDD disk capacity per each disk (GB)')
+
+    # Specific Search Option for SSD Only
+    parser.add_argument('--disk-ssd', dest='disk_ssd' , action='store_true',
+                        help='require SSD')
+
+    parser.add_argument('--disk-ssd-count',  dest='disk_ssd_count' , nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min SSD disk count')
+
+    parser.add_argument('--disk-ssd-total-size', dest='disk_ssd_total_size' , nargs=1, required=False, type=int,
+                        help='min SSD disk capacity in total (GB)')
+
+    parser.add_argument('--disk-ssd-each-size', dest='disk_ssd_each_size' , nargs=1, required=False, type=int,
+                        help='min SSD disk capacity per each disk (GB)')
+    
+    # Specific Search Option for NVMe Only
+    parser.add_argument('--disk-nvme', dest='disk_nvme' , action='store_true',
+                        help='require NVMe')
+
+    parser.add_argument('--disk-nvme-count',  dest='disk_nvme_count' , nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min NVMe disk count')
+
+    parser.add_argument('--disk-nvme-total-size', dest='disk_nvme_total_size' , nargs=1, required=False, type=int,
+                        help='min NVMe disk capacity in total (GB)')
+
+    parser.add_argument('--disk-nvme-each-size', dest='disk_nvme_each_size' , nargs=1, required=False, type=int,
+                        help='min NVMe disk capacity per each disk (GB)')
 
     # Special Properties
     parser.add_argument('--hw-raid', dest='sp_hw_raid' , action='store_true',
@@ -424,8 +647,8 @@ if __name__ == "__main__":
         exit(1)
 
     for server_raw in servers:
-        tax = cli_args.tax[0] if not cli_args.exclude_tax else 0.0
-        analysis = Analysis(server_raw, tax)
+        tax_percent = cli_args.tax_percent[0] if not cli_args.exclude_tax else 0.0
+        analysis = Analysis(server_raw, tax_percent)
 
         # Store Command Line Arguments in Server class
         # Store as either "Match" or "Exclude" depending on the Argument
@@ -439,6 +662,7 @@ if __name__ == "__main__":
                 name = key.replace("match_" , "")
 
                 # Only store if the key already exist
+                # This filters out Meta Values / Command Line Options (e.g. --tax or --exclude-tax)
                 if name in analysis.matchcriteria:
                     # Add key to match
                     analysis.matchcriteria[name] = value
@@ -447,99 +671,122 @@ if __name__ == "__main__":
             if ("exclude" in key):
                 # Adapt key name for self.match[key] addressing
                 name = key.replace("exclude_" , "")
-                print(name)
+
                 # Only store if the key already exist
+                # This filters out Meta Values / Command Line Options (e.g. --tax or --exclude-tax)
                 if name in analysis.excludecriteria:
                     # Add key to exclude
                     analysis.excludecriteria[name] = value
+
+        # Tax Percent Match and Exclude make no Sense so just set to None
+        analysis.matchcriteria["tax_percent"] = None
+        analysis.excludecriteria["tax_percent"] = None
 
         if cli_args.debug:
             print(json.dumps(server_raw))
         if not cli_args.test_mode and str(analysis.id) in idsProcessed:
             continue
 
-        datacenter_matches = False if cli_args.datacenter else True
+
+        # Match ID (useful for debugging)
+        # Must be converted to Integer
+        # If this is not DONE then the evaluation (analysis.id in matchingIDs) below will NOT work
+        analysis.matchresult['id'] = True
+        if cli_args.id is not None:
+            matchingIDs = cli_args.id[0].split(",")
+            for i in range(0, len(matchingIDs)):
+                matchingIDs[i] = int(matchingIDs[i])
+        
+            analysis.matchresult['id'] = False if cli_args.id else True
+            if analysis.id in matchingIDs:
+                analysis.matchresult['id'] = True
+
+
+        # Match Datacenter
+        analysis.matchresult['datacenter'] = False if cli_args.datacenter else True
         if cli_args.datacenter is not None and cli_args.datacenter[0] in analysis.datacenter:
-            datacenter_matches = True
+            analysis.matchresult['datacenter'] = True
 
-        # Store result inside Class
-        analysis.matchresult['datacenter'] = datacenter_matches
+        # Match Price
+        analysis.matchresult['price'] = analysis.price <= cli_args.price[0] if cli_args.price else True
 
-        price_matches = analysis.price <= cli_args.price[0] if cli_args.price else True
-
-        # Store result inside Class
-        analysis.matchresult['price'] = price_matches
-
-        cpu_count_matches = analysis.cpu_count >= cli_args.cpu_count[
+        # Match CPU Count
+        analysis.matchresult['cpu_count'] = analysis.cpu_count >= cli_args.cpu_count[
             0] if cli_args.cpu_count else True
 
-        # Store result inside Class
-        analysis.matchresult['cpu_count'] = cpu_count_matches
 
-        ram_size_matches = analysis.ram_size >= cli_args.ram_size[0] if cli_args.ram_size else True
-
-        # Store result inside Class
-        analysis.matchresult['ram_size'] = ram_size_matches
-
-        disk_count_matches = analysis.disk_count >= cli_args.disk_count[
-            0] if cli_args.disk_count else True
-
-        # Store result inside Class
-        analysis.matchresult['disk_count'] = disk_count_matches
-
-        disk_total_size_matches = analysis.disk_total_size >= cli_args.disk_total_size[
-            0] if cli_args.disk_total_size else True
-        disk_each_size_matches = analysis.get_smallest_disk_size(
-        ) >= cli_args.disk_each_size[0] if cli_args.disk_each_size else True
-        disk_quick_matches = analysis.has_quick_disk() if cli_args.disk_quick else True
-
-        # Store result inside Class
-        analysis.matchresult['disk_total_size'] = disk_total_size_matches
-        analysis.matchresult['disk_each_size'] = disk_each_size_matches
-        analysis.matchresult['disk_quick'] = disk_quick_matches
+        # Match RAM Size
+        analysis.matchresult['ram_size'] = analysis.ram_size >= cli_args.ram_size[0] if cli_args.ram_size else True
 
 
-        sp_hw_raid_matches = analysis.sp_hw_raid if cli_args.sp_hw_raid else True
-
-        # Store result inside Class
-        analysis.matchresult['sp_hw_raid'] = sp_hw_raid_matches
 
 
-        sp_red_psu_matches = analysis.sp_red_psu if cli_args.sp_red_psu else True
+        # Match General Disk Count
+        analysis.matchresult['disk_general_count'] = analysis.disk_general_count >= cli_args.disk_general_count[0] if cli_args.disk_general_count else True
 
-        # Store result inside Class
-        analysis.matchresult['sp_red_psu'] = sp_red_psu_matches
+        # Match General Total Disk Size
+        analysis.matchresult['disk_general_total_size'] = analysis.disk_general_total_size >= cli_args.disk_general_total_size[
+            0] if cli_args.disk_general_total_size else True
 
-
-        sp_ecc_matches = analysis.sp_ecc if cli_args.sp_ecc else True
-
-        # Store result inside Class
-        analysis.matchresult['sp_ecc'] = sp_ecc_matches
-
-
-        sp_gpu_matches = analysis.sp_gpu if cli_args.sp_gpu else True
-
-        # Store result inside Class
-        analysis.matchresult['sp_gpu'] = sp_gpu_matches
+        # Match General Each Disk Size
+        analysis.matchresult['disk_general_each_size'] = analysis.disk_general_each_size >= cli_args.disk_general_each_size[0] if cli_args.disk_general_each_size else True
 
 
-        sp_ipv4_matches = analysis.sp_ipv4 if cli_args.sp_ipv4 else True
-
-        # Store result inside Class
-        analysis.matchresult['sp_ipv4'] = sp_ipv4_matches
 
 
-        sp_inic_matches = analysis.sp_inic if cli_args.sp_inic else True
+        # Match Quick Disk (SSD/NVME)
+        analysis.matchresult['disk_quick'] = analysis.has_quick_disk() if cli_args.disk_quick else True
+
+        # Match Quick Disk Count
+        analysis.matchresult['disk_quick_count'] = analysis.disk_quick_count >= cli_args.disk_quick_count[0] if cli_args.disk_quick_count else True
+
+        # Match Quick Total Disk Size
+        analysis.matchresult['disk_quick_total_size'] = analysis.disk_quick_total_size >= cli_args.disk_quick_total_size[
+            0] if cli_args.disk_general_total_size else True
+
+        # Match Quick Each Disk Size
+        analysis.matchresult['disk_quick_each_size'] = analysis.disk_quick_each_size >= cli_args.disk_quick_each_size[0] if cli_args.disk_quick_each_size else True
 
 
-        # Store result inside Class
-        analysis.matchresult['sp_inic'] = sp_inic_matches
 
+        # Match NVME Disk
+        analysis.matchresult['disk_nvme'] = analysis.has_nvme_disk() if cli_args.disk_nvme else True
+
+        # Match NVME Disk Count
+        analysis.matchresult['disk_nvme_count'] = analysis.disk_nvme_count >= cli_args.disk_nvme_count[0] if cli_args.disk_nvme_count else True
+
+        # Match NVME Total Disk Size
+        analysis.matchresult['disk_nvme_total_size'] = analysis.disk_nvme_total_size >= cli_args.disk_nvme_total_size[
+            0] if cli_args.disk_general_total_size else True
+
+        # Match NVME Each Disk Size
+        analysis.matchresult['disk_nvme_each_size'] = analysis.disk_nvme_each_size >= cli_args.disk_nvme_each_size[0] if cli_args.disk_nvme_each_size else True
+
+
+
+
+        # Match Special - Hardware Raid
+        analysis.matchresult['sp_hw_raid'] = analysis.sp_hw_raid if cli_args.sp_hw_raid else True
+
+        # Match Special - Redundant PSU
+        analysis.matchresult['sp_red_psu'] = analysis.sp_red_psu if cli_args.sp_red_psu else True
+
+        # Match Special - ECC RAM
+        analysis.matchresult['sp_ecc'] = analysis.sp_ecc if cli_args.sp_ecc else True
+
+        # Match Special - GPU
+        analysis.matchresult['sp_gpu'] = analysis.sp_gpu if cli_args.sp_gpu else True
+
+        # Match Special - IPv4
+        analysis.matchresult['sp_ipv4'] = analysis.sp_ipv4 if cli_args.sp_ipv4 else True
+
+        # Match Special - Intel NIC
+        analysis.matchresult['sp_inic'] = analysis.sp_inic if cli_args.sp_inic else True
 
 
         # Match Specific CPUs
         # False by default unless Match is found
-        cpu_description_matches = False
+        analysis.matchresult['cpu_description'] = False
         if cli_args.match_cpu_description:
 
             # Split Possible Matches
@@ -550,16 +797,15 @@ if __name__ == "__main__":
             for cpu in selected_cpu_matches:
                 if cpu in analysis.cpu_description.lower():
                     # Found match
-                    cpu_description_matches = True
-                    #print(f"Server {analysis.id} matches requested CPU <{cli_args.match_cpu[0]}> (Server has CPU {analysis.cpu_description})")
+                    analysis.matchresult['cpu_description'] = True
         else:
             # Not Required
-            cpu_description_matches = True
+            analysis.matchresult['cpu_description'] = True
 
 
         # Exclude Specific CPUs
         # True by default unless Match is found
-        cpu_description_excludes = True
+        analysis.excluderesult['cpu_description'] = True
         if cli_args.exclude_cpu_description:
             # Split Possible Matches
             # Make sure both the Description and Search Criteria are lowercase in order not to miss any potential Match
@@ -569,45 +815,29 @@ if __name__ == "__main__":
             for cpu in selected_cpu_exclusions:
                 if cpu in analysis.cpu_description.lower():
                     # Found exclusion match
-                    cpu_description_matches = False
-                    #print(f"Server {analysis.id} MUST BE EXCLUDED since CPU <{cpu}> is in EXCLUSION LIST ({cli_args.match_cpu[0]}) - Server has CPU {analysis.cpu_description})")
+                    analysis.excluderesult['cpu_description'] = False
         else:
             # Not Required
-            cpu_description_excludes = True
+            analysis.excluderesult['cpu_description'] = True
 
 
-        # Store result inside Class
-        analysis.matchresult['cpu_description'] = cpu_description_matches
-        analysis.excluderesult['cpu_description'] = cpu_description_excludes
 
-        print(analysis)
-
-        if cpu_description_matches:
-           print(f"Server {analysis.id} matches CPU Matching Criteria (Server has CPU {analysis.cpu_description})")
-           print(analysis)
-
-        # Update the Overall Criterials (XXX_matches && XXX_excludes)
+        # Update the Overall Criteria (XXX_resulkt = XXX_matches and XXX_excludes)
         analysis.computeOverallResult()
 
         # Check if Server Satisfies all Criteria of Match+Exclude
         if analysis.fitRequirements():
-        #if price_matches and disk_count_matches and disk_total_size_matches and disk_each_size_matches and \
-        #        disk_quick_matches and sp_hw_raid_matches and sp_red_psu_matches and cpu_count_matches and \
-        #        ram_size_matches and sp_ecc_matches and sp_gpu_matches and sp_ipv4_matches and sp_inic_matches and \
-        #        datacenter_matches and cpu_description_matches:
-
-            # Display Server
+            # Display Analysis
             print(analysis)
 
-            #print("TEST")
-            #print(analysis.get_header())
             if not cli_args.test_mode:
+                # Send Notification
                 send_notification(notifier, analysis, cli_args.send_payload)
+
+                #  Write to File the ID that we processed
                 f.write(","+str(analysis.id))
 
-                # Process Server first in the Database
-                #print(analysis)
-
+                # If a Database is going to be Introduced later on ...
                 # If Server is not Already in the Database with the same Price
                 #pass
                 #    #send_notification(notifier, analysis, cli_args.send_payload)
