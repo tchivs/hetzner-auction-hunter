@@ -177,6 +177,8 @@ perform_search() {
         -v ${APP_HOST_DATA_PATH}:${APP_CONTAINER_DATA_PATH} \
         --net ${CONTAINER_NETWORK} \
         --env-file "./.env" \
+        -e "NOTIFIERS_PUSHOVER_USER"="${NOTIFIERS_PUSHOVER_USER}" \
+        -e "NOTIFIERS_PUSHOVER_TOKEN"="${NOTIFIERS_PUSHOVER_TOKEN}" \
         hetzner-auction-hunter:latest \
         ${lhahargs[*]}
     elif [[ "${RUN_MODE}" == "local" ]]
