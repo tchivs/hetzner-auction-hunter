@@ -2,11 +2,27 @@
 
 # This is a "Hack" to allow compose.yml to pick up the Latest Image
 
+# Determine toolpath if not set already
+relativepath="./" # Define relative path to go from this script to the root level of the tool
+if [[ ! -v toolpath ]]; then scriptpath=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ); toolpath=$(realpath --canonicalize-missing $scriptpath/$relativepath); fi
+
+# Set Environment
+source "${toolpath}/env.sh"
+
 # Image Name
 image=${1-""}
-if [[ -z "$image" ]]
+
+# If not set by stdin
+if [[ -z "${image}" ]]
 then
-    read -p "Enter the desired Image Name & Tag to Push to Local Registry: " image
+    # Try to use Evironment Variable CONTAINER_DEFAULT_IMAGE_UPLOAD
+    image="${CONTAINER_DEFAULT_IMAGE_UPLOAD}"
+
+    # If still not set ask User Interactively
+    if [[ -z "${image}" ]]
+    then
+        read -p "Enter the desired Image Name & Tag to Push to Local Registry: " image
+    fi
 fi
 
 ##################################################################################
