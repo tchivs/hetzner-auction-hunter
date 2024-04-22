@@ -780,8 +780,7 @@ if __name__ == "__main__":
         analysis.matchresult['disk_general_count'] = analysis.disk_general_count >= cli_args.disk_general_count[0] if cli_args.disk_general_count else True
 
         # Match General Total Disk Size
-        analysis.matchresult['disk_general_total_size'] = analysis.disk_general_total_size >= cli_args.disk_general_total_size[
-            0] if cli_args.disk_general_total_size else True
+        analysis.matchresult['disk_general_total_size'] = analysis.disk_general_total_size >= cli_args.disk_general_total_size[0] if cli_args.disk_general_total_size else True
 
         # Match General Each Disk Size
         analysis.matchresult['disk_general_each_size'] = analysis.disk_general_each_size >= cli_args.disk_general_each_size[0] if cli_args.disk_general_each_size else True
@@ -796,12 +795,37 @@ if __name__ == "__main__":
         analysis.matchresult['disk_quick_count'] = analysis.disk_quick_count >= cli_args.disk_quick_count[0] if cli_args.disk_quick_count else True
 
         # Match Quick Total Disk Size
-        analysis.matchresult['disk_quick_total_size'] = analysis.disk_quick_total_size >= cli_args.disk_quick_total_size[
-            0] if cli_args.disk_general_total_size else True
+        analysis.matchresult['disk_quick_total_size'] = analysis.disk_quick_total_size >= cli_args.disk_quick_total_size[0] if cli_args.disk_quick_total_size else True
 
         # Match Quick Each Disk Size
         analysis.matchresult['disk_quick_each_size'] = analysis.disk_quick_each_size >= cli_args.disk_quick_each_size[0] if cli_args.disk_quick_each_size else True
 
+
+
+        # Match HDD Disk
+        analysis.matchresult['disk_hdd'] = analysis.has_hdd_disk() if cli_args.disk_hdd else True
+
+        # Match HDD Disk Count
+        analysis.matchresult['disk_hdd_count'] = analysis.disk_hdd_count >= cli_args.disk_hdd_count[0] if cli_args.disk_hdd_count else True
+
+        # Match HDD Total Disk Size
+        analysis.matchresult['disk_hdd_total_size'] = analysis.disk_hdd_total_size >= cli_args.disk_hdd_total_size[0] if cli_args.disk_hdd_total_size else True
+
+        # Match HDD Each Disk Size
+        analysis.matchresult['disk_hdd_each_size'] = analysis.disk_hdd_each_size >= cli_args.disk_hdd_each_size[0] if cli_args.disk_hdd_each_size else True
+
+
+        # Match SSD Disk
+        analysis.matchresult['disk_ssd'] = analysis.has_ssd_disk() if cli_args.disk_ssd else True
+
+        # Match SSD Disk Count
+        analysis.matchresult['disk_ssd_count'] = analysis.disk_ssd_count >= cli_args.disk_ssd_count[0] if cli_args.disk_ssd_count else True
+
+        # Match SSD Total Disk Size
+        analysis.matchresult['disk_ssd_total_size'] = analysis.disk_ssd_total_size >= cli_args.disk_ssd_total_size[0] if cli_args.disk_ssd_total_size else True
+
+        # Match SSD Each Disk Size
+        analysis.matchresult['disk_ssd_each_size'] = analysis.disk_ssd_each_size >= cli_args.disk_ssd_each_size[0] if cli_args.disk_ssd_each_size else True
 
 
         # Match NVME Disk
@@ -811,8 +835,7 @@ if __name__ == "__main__":
         analysis.matchresult['disk_nvme_count'] = analysis.disk_nvme_count >= cli_args.disk_nvme_count[0] if cli_args.disk_nvme_count else True
 
         # Match NVME Total Disk Size
-        analysis.matchresult['disk_nvme_total_size'] = analysis.disk_nvme_total_size >= cli_args.disk_nvme_total_size[
-            0] if cli_args.disk_general_total_size else True
+        analysis.matchresult['disk_nvme_total_size'] = analysis.disk_nvme_total_size >= cli_args.disk_nvme_total_size[0] if cli_args.disk_nvme_total_size else True
 
         # Match NVME Each Disk Size
         analysis.matchresult['disk_nvme_each_size'] = analysis.disk_nvme_each_size >= cli_args.disk_nvme_each_size[0] if cli_args.disk_nvme_each_size else True
