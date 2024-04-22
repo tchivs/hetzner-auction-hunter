@@ -1,3 +1,12 @@
+#################################################################
+######################## !! IMPORTANT !! ########################
+#################################################################
+#
+# Each time the Systemd Timer Service (this file) gets modified, you need to run:
+# 
+# systemctl --user daemon-reload
+# systemctl --user restart hetzner-auction-hunter-runner.timer
+#
 [Unit]
 Description=Run Hetzner Auction Hunter for Cheap Servers
 RefuseManualStart=no
@@ -7,11 +16,14 @@ RefuseManualStop=no
 # Execute job if it missed a run due to machine being off
 Persistent=true
 
-# Set the timer accuracy to 1 second instead of the default 1 minute
+# Set the timer accuracy to 15 second instead of the default 1 minute (60 seconds)
 AccuracySec=15s
 
-# Run Every Day and every Hour *:00:00
-OnCalendar=*-*-* *:00:00
+# Run Every Day and every 5 Minutes
+OnCalendar=*-*-* *:0,5,10,15,20,25,30,35,40,45,50,55:*
+
+# Run Every Day and every 2 Minutes
+#OnCalendar=*-*-* *:0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58:*
 
 # Run when enabled (after a small Delay)
 OnActiveSec=5s
