@@ -15,7 +15,8 @@ source "${toolpath}/functions.sh"
 
 # Load the Environment Variables into THIS Script
 #shdoteven --env ".env"
-eval "$(shdotenv --env .env || echo \"exit $?\")"
+#eval "$(shdotenv --env .env || echo \"exit $?\")"
+eval "$(shdotenv --overload --env .env || echo \"exit $?\")"
 
 # Convert Variables to full Paths
 APP_HOST_DATA_PATH=$(realpath --canonicalize-missing "${APP_HOST_DATA_PATH}")

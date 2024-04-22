@@ -18,7 +18,7 @@ The price displayed on hetzner.com by default includes monthly rate for IPv4 add
 
 ```
 usage: hah.py [-h] [--data-url DATA_URL] [--provider PROVIDER] [--tax TAX] [--price PRICE] [--id IDS] [--disk-general-count DISK_GENERAL_COUNT] [--disk-general-total-size DISK_GENERAL_TOTAL_SIZE] [--disk-general-each-size DISK_GENERAL_EACH_SIZE] [--disk-quick] [--disk-quick-count DISK_QUICK_COUNT] [--disk-quick-total-size DISK_QUICK_TOTAL_SIZE] [--disk-quick-each-size DISK_QUICK_EACH_SIZE] [--disk-hdd] [--disk-hdd-count DISK_HDD_COUNT] [--disk-hdd-total-size DISK_HDD_TOTAL_SIZE] [--disk-hdd-each-size DISK_HDD_EACH_SIZE] [--disk-ssd] [--disk-ssd-count DISK_SSD_COUNT] [--disk-ssd-total-size DISK_SSD_TOTAL_SIZE] [--disk-ssd-each-size DISK_SSD_EACH_SIZE] [--disk-nvme] [--disk-nvme-count DISK_NVME_COUNT] [--disk-nvme-total-size DISK_NVME_TOTAL_SIZE] [--disk-nvme-each-size DISK_NVME_EACH_SIZE] [--hw-raid] [--red-psu] [--gpu] [--ipv4] [--inic]
-[--cpu-count CPU_COUNT] [--ram RAM] [--ecc] [--dc DC] [-f [F]] [--exclude-tax] [--test-mode] [--debug] [--send-payload]
+[--cpu-count CPU_COUNT] [--ram RAM] [--ecc] [--dc DC] [-f [F]] [--exclude-tax] [--test-mode] [--debug] [--quiet] [--verbose] [--send-payload]
 
 hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library
 
@@ -29,9 +29,15 @@ options:
   --data-url DATA_URL                                     URL to live_data_sb.json
   --provider PROVIDER                                     Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html
   --exclude-tax                                           exclude tax from output price
+  
+  # Operating Mode
   --test-mode                                             do not send actual messages and ignore state file
-  --debug                                                 debug mode
   --send-payload                                          send server data as JSON payload
+
+  # Output Messages Control
+  --debug                                                 Debug Mode (generates even more Output than --verbose)
+  --verbose                                               Verbose Mode (generates more Output - Useful for Troubleshooting)
+  --quiet                                                 Quiet Mode (suppress most Output)
 
   # General Server Options
   --cpu-count CPU_COUNT                                   min CPU count (Sockets, not Cores)      

@@ -14,11 +14,19 @@ import sys
 # Import os Python Module
 import os
 
+# Import SubProcess Module
+import subprocess
+
 # Use TextTable
 from texttable import Texttable
 
 # Use SQLite3
 import sqlite3
+
+# Define Output Text Control Variables
+PRINT_DEBUG = True
+PRINT_VERBOSE = True
+
 
 # Define Server Class
 class Server:
@@ -276,10 +284,11 @@ class Server:
         t = Texttable()
 
         # Get Terminal Width
-        terminalColums = os.system("TERM=dumb tput cols")
+        cmdResult = subprocess.run("TERM=dumb tput cols" , stdout=subprocess.PIPE , shell=True)
+        terminalColumns = int(cmdResult.stdout.decode('utf-8'))
 
         # Set Maximum Width for the Table
-        t.set_max_width(terminalColums*0.8)
+        t.set_max_width(terminalColumns*0.8)
 
 	    # Initialize Variable
         data = []
@@ -362,10 +371,11 @@ class Analysis(Server):
         t = Texttable()
 
         # Get Terminal Width
-        terminalColums = os.system("TERM=dumb tput cols")
+        cmdResult = subprocess.run("TERM=dumb tput cols" , stdout=subprocess.PIPE , shell=True)
+        terminalColumns = int(cmdResult.stdout.decode('utf-8'))
 
         # Set Maximum Width for the Table
-        t.set_max_width(terminalColums*0.8)
+        t.set_max_width(terminalColumns*0.8)
 
 	    # Initialize Variable
         data = []
@@ -474,8 +484,23 @@ def send_notification(notifier, server, send_payload):
             else:
                 response = notifier.notify(message=msg)
 
-        print(f"Send message with title <{title}> and message <{msg}>")
-        print(f"Response: OK Status {response.ok} , Response Errors: {response.errors}")
+        
+
+        if not response.ok:
+            print(f"ERROR SENDING NOTIFICATION")
+            print(f"\tProvider: {response.provider}")
+            print(f"\tOK: {response.ok}")
+            print(f"\tStatus: {response.status}")
+            print(f"\tError: {response.errors}")
+
+        if PRINT_DEBUG:
+            print(f"Sending Notification")
+            print(f"\tProvider: {response.provider}")
+            print(f"\tMessage Title: {title}")
+            print(f"\tMessage Data: {response.data}")
+            print(f"\tReceived OK: {response.ok}")
+            print(f"\tReceived Status: {response.status}")
+            print(f"\tReceived Errors: {response.errors}")
 
 
 if __name__ == "__main__":
@@ -620,13 +645,40 @@ if __name__ == "__main__":
     parser.add_argument('--test-mode', dest='test_mode' , action='store_true',
                         help='do not send actual messages and ignore state file')
 
-    parser.add_argument('--debug', dest='debug' , action='store_true',
+    parser.add_argument('--quiet', dest='quiet' , action='store_true', default=False,
+                        help='quiet mode (suppress most text output)')
+
+    parser.add_argument('--verbose', dest='verbose' , action='store_true', default=True,
+                        help='verbose mode (provide additional text output)')
+
+    parser.add_argument('--debug', dest='debug' , action='store_true', default=False,
                         help='debug mode')
 
     parser.add_argument('--send-payload', dest='send_payload' , action='store_true',
                         help='send server data as JSON payload')
 
     cli_args = parser.parse_args()
+
+    # Set PRINT Level
+    if cli_args.debug:
+        PRINT_VERBOSE = True
+        PRINT_DEBUG = True
+    elif cli_args.verbose and not cli_args.quiet:
+        PRINT_VERBOSE = True
+        PRINT_DEBUG = False
+    elif cli_args.quiet:
+        PRINT_VERBOSE = False
+        PRINT_DEBUG = False
+    else:
+        PRINT_VERBOSE = True
+        PRINT_DEBUG = True
+
+    # Array to Store Found Matches
+    foundServers = []
+        
+
+    if PRINT_DEBUG:
+        print(f"Debug: {cli_args.debug} , Verbose: {cli_args.verbose} , Quiet: {cli_args.quiet}")
 
 
     if not cli_args.test_mode:
@@ -830,12 +882,15 @@ if __name__ == "__main__":
 
         # Check if Server Satisfies all Criteria of Match+Exclude
         if analysis.fitRequirements():
-            # Display Analysis
-            print(analysis)
+            # Store Element in Array
+            foundServers.append(analysis)
+            
+            # Display Complete Analysis
+            if PRINT_VERBOSE:
+                print(analysis)
 
-            # Send Notification
-            #send_notification(notifier, analysis, cli_args.send_payload)
-
+            # Display Short Summary
+            print(analysis.get_header())
 
             if not cli_args.test_mode:
                 # Send Notification
