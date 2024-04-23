@@ -26,6 +26,46 @@ APP_CONTAINER_DATA_PATH=$(realpath --canonicalize-missing "${APP_CONTAINER_DATA_
 APP_CONTAINER_SEARCH_PATH=$(realpath --canonicalize-missing "${APP_CONTAINER_SEARCH_PATH}")
 APP_CONTAINER_RESULTS_PATH=$(realpath --canonicalize-missing "${APP_CONTAINER_RESULTS_PATH}")
 
+# Autodetect Container Engine if nothing is Specified
+if [[ -z "${CONTAINER_ENGINE}" ]]
+then
+   if [[ -n $(command -v podman) ]]
+   then
+      # Use Podman if available
+      engine="podman"
+   elif [[ -n $(command -v docker) ]]
+   then
+      # Use Docker if available
+      engine="docker"
+   else
+      # Autodetection failed
+      echo "ERROR: Could not automatically detect Container Engine. Neither <podman> nor <docker> could be found on the System"
+      echo "       Maybe you need to adjust your PATH environment variabke ?"
+      echo "ABORTING EXECUTION"
+      exit 8
+   fi
+else
+   # Use the value set in the Environment Variable
+   engine="${CONTAINER_ENGINE}"
+fi
+
+# Check that the speciied Container Engine can be found on the System
+if [[ -n $(command -v podman) ]] && [[ "$engine" == "podman" ]]
+then
+    # OK
+    x=1
+elif [[ -n $(command -v docker) ]] && [[ "$engine" == "docker" ]]
+then
+    # OK
+    x=1
+else
+    # Error
+    echo "ERROR: Neither <podman> nor <docker> could be found and/or the specified ContainerEngine <${engine}> was not valid."
+    echo "       Maybe you need to adjust your PATH environment variabke ?"
+    echo "ABORTING EXECUTION"
+    exit 7
+fi
+
 # Decide how to Run
 if [[ "${RUN_MODE}" == "container" ]]
 then
@@ -55,7 +95,7 @@ then
 	Host Data Path|${APP_HOST_DATA_PATH}
 	Host Search Path|${APP_HOST_DATA_PATH}
 	Host Results Path|${APP_HOST_DATA_PATH}
-	
+
 	Container Data Path|${APP_CONTAINER_DATA_PATH}
 	Container Search Path|${APP_CONTAINER_DATA_PATH}
 	Container Results Path|${APP_CONTAINER_DATA_PATH}

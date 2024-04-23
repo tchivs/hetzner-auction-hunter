@@ -1,7 +1,14 @@
 #!/bin/bash
 
-# Optional argument
-engine=${1-"podman"}
+# Determine toolpath if not set already
+relativepath="./" # Define relative path to go from this script to the root level of the tool
+if [[ ! -v toolpath ]]; then scriptpath=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ); toolpath=$(realpath --canonicalize-missing $scriptpath/$relativepath); fi
+
+# Set Environment
+source "${toolpath}/env.sh"
+
+# Include Functions
+source "${toolpath}/functions.sh"
 
 # Container Name
 name="hetzner-auction-hunter"
@@ -85,19 +92,8 @@ rm -rf  ./app/*
 mkdir -p app
 cp -ar ../app/ .
 
-# Prefer Podman over Docker
-if [[ -n $(command -v podman) ]] && [[ "$engine" == "podman" ]]
-then
-    # Use Podman and ./build/ folder to build the image
-    podman build ${opts[*]} -f $buildfile . -t ${name,,}:$tag -t ${name,,}:latest
-elif [[ -n $(command -v docker) ]] && [[ "$engine" == "docker" ]]
-then
-    # Use Docker and ./build/ folder to build the image
-    docker build ${opts[*]} -f $buildfile . -t ${name,,}:$tag -t ${name,,}:latest
-else
-    # Error
-    echo "Neither Podman nor Docker could be found and/or the specified Engine <$engine> was not valid. Aborting !"
-fi
+# Perform the Build
+$engine build ${opts[*]} -f $buildfile . -t ${name,,}:$tag -t ${name,,}:latest
 
 # Change Back to Current Path
 cd ${currentpath} || exit

@@ -168,11 +168,11 @@ perform_search() {
         local lcontainer="hetzner-auction-hunter-${lsearchlabel}"
 
         # Stop and remove Container if it's currently running
-        podman stop --ignore "${lcontainer}"
-        podman rm --ignore "${lcontainer}"
+        $engine stop --ignore "${lcontainer}"
+        $engine rm --ignore "${lcontainer}"
 
         # Run the new Container
-        podman run --rm --replace \
+        $engine run --rm --replace \
         --name="${lcontainer}" \
         -v ${APP_HOST_DATA_PATH}:${APP_CONTAINER_DATA_PATH} \
         --net ${CONTAINER_NETWORK} \

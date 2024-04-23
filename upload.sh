@@ -45,13 +45,13 @@ insecure = true
 EOF
 
 # Run a Local Registry WITHOUT Persistent Data Storage
-podman run -d --replace -p 5000:5000 --name registry registry:2
+$engine run -d --replace -p 5000:5000 --name registry registry:2
 
 # Tag the Image
-podman tag $image localhost:5000/local/$image
+$engine tag $image localhost:5000/local/$image
 
 # Push the locally built Image to the Local Registry
-podman push --tls-verify=false localhost:5000/local/$image
+$engine push --tls-verify=false localhost:5000/local/$image
 
 # Edit docker-compose file to use localhost:5000/local/$image
 # ...

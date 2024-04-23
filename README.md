@@ -15,6 +15,9 @@ The price displayed on hetzner.com by default includes monthly rate for IPv4 add
 * some writable file to store processed offers (defaults to `/tmp/hah.txt`)
 
 ## Get Started
+I am using `podman` to build/run my Containers.
+If you are using `docker`, some modifications will be Required.
+
 ```
 # Clone Reponsitory
 git clone https://github.com/luckylinux/hetzner-auction-hunter.git
