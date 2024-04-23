@@ -14,6 +14,43 @@ The price displayed on hetzner.com by default includes monthly rate for IPv4 add
 * properly configured [Notifiers provider](https://notifiers.readthedocs.io/en/latest/providers/index.html)
 * some writable file to store processed offers (defaults to `/tmp/hah.txt`)
 
+## Get Started
+```
+# Clone Reponsitory
+git clone https://github.com/luckylinux/hetzner-auction-hunter.git
+
+# Copy Example .env Configuration
+cp .env.example .env
+
+# Edit Environment Variables with your preferred Text Editor
+nano .env
+
+# Define what you want to search for
+cp search.sh.example search.sh
+
+# Edit search Criteria
+nano search.ch
+
+# Build & Upload to local Registry Server ("HACK" for Docker/Podman Compose to pick up the locally built Image)
+./build.sh
+./upload.sh
+
+# Setup Systemd Service & Timer to automatically perform Search
+mkdir -p $HOME/.config/systemd/user
+cp hetzner-auction-hunter-runner.service $HOME/.config/systemd/user/
+cp hetzner-auction-hunter-runner.timer $HOME/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable hetzner-auction-hunter-runner.service
+systemctl --user enable hetzner-auction-hunter-runner.timer
+systemctl --user restart hetzner-auction-hunter-runner.timer
+
+# Check that everything works
+# You should see some output (without errors) in the Systemd Logs
+systemctl --user status hetzner-auction-hunter-runner.service
+journalctl --user -xeu hetzner-auction-hunter-runner.service
+
+```
+
 ## usage
 
 ```
