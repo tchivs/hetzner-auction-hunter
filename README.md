@@ -39,6 +39,11 @@ nano search.ch
 mkdir -p $HOME/.config/systemd/user
 cp hetzner-auction-hunter-runner.service $HOME/.config/systemd/user/
 cp hetzner-auction-hunter-runner.timer $HOME/.config/systemd/user/
+
+# Adjust Application Paths according to your setup
+nano $HOME/.config/systemd/user/hetzner-auction-hunter-runner.service
+
+# Reload Systemd Daemon + Enable&Start Service/Timer
 systemctl --user daemon-reload
 systemctl --user enable hetzner-auction-hunter-runner.service
 systemctl --user enable hetzner-auction-hunter-runner.timer
