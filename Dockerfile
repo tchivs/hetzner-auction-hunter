@@ -9,6 +9,10 @@ ARG APP_PATH="/opt/app"
 # Define venv Path
 ARG VENV_PATH="/opt/venv"
 
+# Use Cache (Keep downloaded Files)
+# They are stored in the Cache directory, NOT in the final Container Image
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
 # Install CURL & wget
 RUN --mount=type=cache,mode=0777,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,mode=0777,target=/var/lib/apt,sharing=locked \
