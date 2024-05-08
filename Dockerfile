@@ -3,27 +3,30 @@ FROM python:3.11-slim-bookworm
 LABEL desc="hetzner-auction-hunter"
 LABEL website="https://github.com/danielskowronski/hetzner-auction-hunter"
 
-# Update APT Sources
-RUN apt-get update
+# Define Application Path
+ARG APP_PATH="/opt/app"
+
+# Define venv Path
+ARG VENV_PATH="/opt/venv"
 
 # Install CURL & wget
-RUN apt-get install --yes curl wget
-
-# Clear APT cache
-RUN apt-get clean
+RUN --mount=type=cache,mode=0777,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,mode=0777,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    apt-get install --yes curl wget
 
 # Copy Sources
-COPY app/ /opt/app
+COPY app/ ${APP_PATH}
 
 # Create venv
-RUN python3 -m venv "/opt/venv"
+RUN python3 -m venv "${VENV_PATH}"
 
 # Set PATH Variable to include venv
-ENV PATH="$PATH:/opt/venv"
+ENV PATH="$PATH:${VENV_PATH}"
 
 # Try more POSIX compliant Solution
 # This works correclty
-RUN sh -c ". /opt/venv/bin/activate"
+RUN sh -c ". ${VENV_PATH}/bin/activate"
 
 # Install Shdotenv
 #RUN wget "https://github.com/ko1nksm/shdotenv/releases/latest/download/shdotenv" -O "/usr/local/bin/shdotenv"
@@ -36,10 +39,11 @@ RUN chmod +x /usr/local/bin/shdotenv
 ENV PATH="$PATH:/usr/local/bin"
 
 # Install required Packages
-RUN pip install --no-cache-dir -r /opt/app/requirements.txt
+RUN --mount=type=cache,mode=0777,target=/var/lib/pip,sharing=locked \
+    pip install --cache-dir /var/lib/pip -r "${APP_PATH}/requirements.txt"
 
 # Change Directory
-WORKDIR "/opt/app"
+WORKDIR "${APP_PATH}"
 
 # Run Command
 ENTRYPOINT [ "./hah.py" ]
