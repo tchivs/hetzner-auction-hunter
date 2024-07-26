@@ -708,15 +708,9 @@ if __name__ == "__main__":
     servers = None
     try:
         s = requests.Session()
-        # 配置Socket5代理
-        proxies = {
-            'http': 'socks5://127.0.0.1:2080',
-            'https': 'socks5://127.0.0.1:2080'
-        }
         s.mount('file://', requests_file.FileAdapter())
         rsp = s.get(cli_args.data_url[0], headers={
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15'},
-                    proxies=proxies)
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15'})
         servers = json.loads(rsp.text)['server']
     except Exception as e:
         print('Failed to download auction list')
