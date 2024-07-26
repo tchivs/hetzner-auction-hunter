@@ -1,3 +1,4 @@
+requests
 requests_file
 notifiers
 html2text
