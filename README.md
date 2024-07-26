@@ -181,7 +181,7 @@ export HAH_PROVIDER=telegram
 To get servers cheaper than 38 EUR with more than 24GB of RAM, disks at least 3TB:
 
 ```bash
-./hah.py --provider $HAH_PROVIDER --price 38 --disk-size 3000 --ram 24
+./hah.py --provider $HAH_PROVIDER --price 38 --disk-quick-total-size 3000 --ram 24
 ```
 
 ### docker
