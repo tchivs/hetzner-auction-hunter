@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from datetime import datetime
 import shutil
+import time
 
 import requests
 import requests_file
@@ -19,6 +21,7 @@ import os
 # Import SubProcess Module
 import subprocess
 
+import schedule
 # Use TextTable
 from texttable import Texttable
 
@@ -518,197 +521,15 @@ def send_notification(notifier, server, send_payload):
             print(f"\tReceived Errors: {response.errors}")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description='hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library')
+s = requests.Session()
+s.mount('file://', requests_file.FileAdapter())
 
-    parser.add_argument('--data-url', dest='data_url', nargs=1, required=False, type=str,
-                        default=[
-                            'https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json'],
-                        help='URL to live_data_sb.json')
 
-    parser.add_argument('--provider', dest='provider', nargs=1, required=False, type=str,
-                        default=["dummy"],
-                        help='Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html')
-
-    parser.add_argument('--tax', dest='tax_percent', nargs=1, required=False, type=int,
-                        default=[19],
-                        help='tax rate (VAT) in percents, defaults to 19 (Germany)')
-
-    parser.add_argument('--price', dest='price', nargs=1, required=False, type=int,
-                        help='max price (€)')
-
-    # Match a Specific Server ID (Useful for debugging)
-    parser.add_argument('--id', dest='id', nargs=1, required=False, type=str,
-                        help='Server IDs (comma separated)')
-
-    # Disk Parameters
-
-    # General (ALL Drive Type/Sizes Together)
-    parser.add_argument('--disk-general-count', dest='disk_general_count', nargs=1, required=False, type=int,
-                        default=[1],
-                        help='min disk count')
-
-    parser.add_argument('--disk-general-total-size', dest='disk_general_total_size', nargs=1, required=False, type=int,
-                        help='min disk capacity in total (GB)')
-
-    parser.add_argument('--disk-general-each-size', dest='disk_general_each_size', nargs=1, required=False, type=int,
-                        help='min disk capacity per each disk (GB)')
-
-    # Specific Search Option for NVMe/SSD
-    parser.add_argument('--disk-quick', dest='disk_quick', action='store_true',
-                        help='require SSD/NVMe')
-
-    parser.add_argument('--disk-quick-count', dest='disk_quick_count', nargs=1, required=False, type=int,
-                        default=[0],
-                        help='min SSD/NVMe disk count')
-
-    parser.add_argument('--disk-quick-total-size', dest='disk_quick_total_size', nargs=1, required=False, type=int,
-                        help='min SSD/NVMe disk capacity in total (GB)')
-
-    parser.add_argument('--disk-quick-each-size', dest='disk_quick_each_size', nargs=1, required=False, type=int,
-                        help='min SSD/NVMe disk capacity per each disk (GB)')
-
-    # Specific Search Option for HDD Only
-    parser.add_argument('--disk-hdd', dest='disk_hdd', action='store_true',
-                        help='require HDD')
-
-    parser.add_argument('--disk-hdd-count', dest='disk_hdd_count', nargs=1, required=False, type=int,
-                        default=[0],
-                        help='min HDD disk count')
-
-    parser.add_argument('--disk-hdd-total-size', dest='disk_hdd_total_size', nargs=1, required=False, type=int,
-                        help='min HDD disk capacity in total (GB)')
-
-    parser.add_argument('--disk-hdd-each-size', dest='disk_hdd_each_size', nargs=1, required=False, type=int,
-                        help='min HDD disk capacity per each disk (GB)')
-
-    # Specific Search Option for SSD Only
-    parser.add_argument('--disk-ssd', dest='disk_ssd', action='store_true',
-                        help='require SSD')
-
-    parser.add_argument('--disk-ssd-count', dest='disk_ssd_count', nargs=1, required=False, type=int,
-                        default=[0],
-                        help='min SSD disk count')
-
-    parser.add_argument('--disk-ssd-total-size', dest='disk_ssd_total_size', nargs=1, required=False, type=int,
-                        help='min SSD disk capacity in total (GB)')
-
-    parser.add_argument('--disk-ssd-each-size', dest='disk_ssd_each_size', nargs=1, required=False, type=int,
-                        help='min SSD disk capacity per each disk (GB)')
-
-    # Specific Search Option for NVMe Only
-    parser.add_argument('--disk-nvme', dest='disk_nvme', action='store_true',
-                        help='require NVMe')
-
-    parser.add_argument('--disk-nvme-count', dest='disk_nvme_count', nargs=1, required=False, type=int,
-                        default=[0],
-                        help='min NVMe disk count')
-
-    parser.add_argument('--disk-nvme-total-size', dest='disk_nvme_total_size', nargs=1, required=False, type=int,
-                        help='min NVMe disk capacity in total (GB)')
-
-    parser.add_argument('--disk-nvme-each-size', dest='disk_nvme_each_size', nargs=1, required=False, type=int,
-                        help='min NVMe disk capacity per each disk (GB)')
-
-    # Special Properties
-    parser.add_argument('--hw-raid', dest='sp_hw_raid', action='store_true',
-                        help='require Hardware RAID')
-
-    parser.add_argument('--red-psu', dest='sp_red_psu', action='store_true',
-                        help='require Redundant PSU')
-
-    parser.add_argument('--ecc', dest='sp_ecc', action='store_true',
-                        help='require ECC memory')
-
-    parser.add_argument('--gpu', dest='sp_gpu', action='store_true',
-                        help='require discrete GPU')
-
-    parser.add_argument('--ipv4', dest='sp_ipv4', action='store_true',
-                        help='require IPv4')
-
-    parser.add_argument('--inic', dest='sp_inic', action='store_true',
-                        help='require Intel NIC')
-
-    parser.add_argument('--cpu-count', dest='cpu_count', nargs=1, required=False, type=int,
-                        default=[1],
-                        help='min CPU count')
-
-    parser.add_argument('--match-cpu', dest='match_cpu_description', nargs=1, required=False, type=str,
-                        help='match specific server by CPU description')
-
-    parser.add_argument('--exclude-cpu', dest='exclude_cpu_description', nargs=1, required=False, type=str,
-                        help='exclude specific server by CPU description (has priority over --match-cpu)')
-
-    parser.add_argument('--ram', dest='ram_size', nargs=1, required=False, type=int,
-                        help='min RAM (GB)')
-
-    parser.add_argument('--dc', dest='datacenter', nargs=1, required=False,
-                        help='datacenter (FSN1-DC15) or location (FSN)')
-
-    parser.add_argument('-f', nargs='?',
-                        default='/tmp/hah.txt',
-                        help='state file')
-
-    parser.add_argument('--exclude-tax', dest='exclude_tax', action='store_true',
-                        help='exclude tax from output price')
-
-    parser.add_argument('--test-mode', dest='test_mode', action='store_true',
-                        help='do not send actual messages and ignore state file')
-
-    parser.add_argument('--quiet', dest='quiet', action='store_true', default=False,
-                        help='quiet mode (suppress most text output)')
-
-    parser.add_argument('--verbose', dest='verbose', action='store_true', default=True,
-                        help='verbose mode (provide additional text output)')
-
-    parser.add_argument('--debug', dest='debug', action='store_true', default=False,
-                        help='debug mode')
-
-    parser.add_argument('--send-payload', dest='send_payload', action='store_true',
-                        help='send server data as JSON payload')
-
-    cli_args = parser.parse_args()
-
-    # Set PRINT Level
-    if cli_args.debug:
-        PRINT_VERBOSE = True
-        PRINT_DEBUG = True
-    elif cli_args.verbose and not cli_args.quiet:
-        PRINT_VERBOSE = True
-        PRINT_DEBUG = False
-    elif cli_args.quiet:
-        PRINT_VERBOSE = False
-        PRINT_DEBUG = False
-    else:
-        PRINT_VERBOSE = True
-        PRINT_DEBUG = True
-
-    # Array to Store Found Matches
-    foundServers = []
-
-    if PRINT_DEBUG:
-        print(f"Debug: {cli_args.debug} , Verbose: {cli_args.verbose} , Quiet: {cli_args.quiet}")
-
-    if not cli_args.test_mode:
-        f = open(cli_args.f, 'a+')
-        idsProcessed = open(cli_args.f).read()
-        notifier_args = {}
-        text_format = 'html'
-        if cli_args.provider[0] == "dummy":
-            notifier = None
-        else:
-            provider = cli_args.provider[0]
-            notifier = notifiers.get_notifier(provider)
-            if provider == 'telegram':
-                text_format = 'markdown'
-                notifier_args = {'token': os.environ['NOTIFIERS_TELEGRAM_TOKEN'],
-                                 'chat_id': os.environ['NOTIFIERS_TELEGRAM_CHAT_ID']}
-
+def job():
     servers = None
+    print(f"task running at {datetime.now()}")
     try:
-        s = requests.Session()
-        s.mount('file://', requests_file.FileAdapter())
+
         rsp = s.get(cli_args.data_url[0], headers={
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15'})
         servers = json.loads(rsp.text)['server']
@@ -716,7 +537,6 @@ if __name__ == "__main__":
         print('Failed to download auction list')
         print(e)
         exit(1)
-
     for server_raw in servers:
         tax_percent = cli_args.tax_percent[0] if not cli_args.exclude_tax else 0.0
         analysis = Analysis(server_raw, tax_percent)
@@ -941,6 +761,202 @@ if __name__ == "__main__":
                 # pass
                 #    #send_notification(notifier, analysis, cli_args.send_payload)
                 #    #f.write(","+str(analysis.id))
-
     if not cli_args.test_mode:
         f.close()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library')
+
+    parser.add_argument('--data-url', dest='data_url', nargs=1, required=False, type=str,
+                        default=[
+                            'https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json'],
+                        help='URL to live_data_sb.json')
+
+    parser.add_argument('--provider', dest='provider', nargs=1, required=False, type=str,
+                        default=["dummy"],
+                        help='Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html')
+
+    parser.add_argument('--tax', dest='tax_percent', nargs=1, required=False, type=int,
+                        default=[19],
+                        help='tax rate (VAT) in percents, defaults to 19 (Germany)')
+
+    parser.add_argument('--price', dest='price', nargs=1, required=False, type=int,
+                        help='max price (€)')
+
+    # Match a Specific Server ID (Useful for debugging)
+    parser.add_argument('--id', dest='id', nargs=1, required=False, type=str,
+                        help='Server IDs (comma separated)')
+
+    # Disk Parameters
+
+    # General (ALL Drive Type/Sizes Together)
+    parser.add_argument('--disk-general-count', dest='disk_general_count', nargs=1, required=False, type=int,
+                        default=[1],
+                        help='min disk count')
+
+    parser.add_argument('--disk-general-total-size', dest='disk_general_total_size', nargs=1, required=False, type=int,
+                        help='min disk capacity in total (GB)')
+
+    parser.add_argument('--disk-general-each-size', dest='disk_general_each_size', nargs=1, required=False, type=int,
+                        help='min disk capacity per each disk (GB)')
+
+    # Specific Search Option for NVMe/SSD
+    parser.add_argument('--disk-quick', dest='disk_quick', action='store_true',
+                        help='require SSD/NVMe')
+
+    parser.add_argument('--disk-quick-count', dest='disk_quick_count', nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min SSD/NVMe disk count')
+
+    parser.add_argument('--disk-quick-total-size', dest='disk_quick_total_size', nargs=1, required=False, type=int,
+                        help='min SSD/NVMe disk capacity in total (GB)')
+
+    parser.add_argument('--disk-quick-each-size', dest='disk_quick_each_size', nargs=1, required=False, type=int,
+                        help='min SSD/NVMe disk capacity per each disk (GB)')
+
+    # Specific Search Option for HDD Only
+    parser.add_argument('--disk-hdd', dest='disk_hdd', action='store_true',
+                        help='require HDD')
+
+    parser.add_argument('--disk-hdd-count', dest='disk_hdd_count', nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min HDD disk count')
+
+    parser.add_argument('--disk-hdd-total-size', dest='disk_hdd_total_size', nargs=1, required=False, type=int,
+                        help='min HDD disk capacity in total (GB)')
+
+    parser.add_argument('--disk-hdd-each-size', dest='disk_hdd_each_size', nargs=1, required=False, type=int,
+                        help='min HDD disk capacity per each disk (GB)')
+
+    # Specific Search Option for SSD Only
+    parser.add_argument('--disk-ssd', dest='disk_ssd', action='store_true',
+                        help='require SSD')
+
+    parser.add_argument('--disk-ssd-count', dest='disk_ssd_count', nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min SSD disk count')
+
+    parser.add_argument('--disk-ssd-total-size', dest='disk_ssd_total_size', nargs=1, required=False, type=int,
+                        help='min SSD disk capacity in total (GB)')
+
+    parser.add_argument('--disk-ssd-each-size', dest='disk_ssd_each_size', nargs=1, required=False, type=int,
+                        help='min SSD disk capacity per each disk (GB)')
+
+    # Specific Search Option for NVMe Only
+    parser.add_argument('--disk-nvme', dest='disk_nvme', action='store_true',
+                        help='require NVMe')
+
+    parser.add_argument('--disk-nvme-count', dest='disk_nvme_count', nargs=1, required=False, type=int,
+                        default=[0],
+                        help='min NVMe disk count')
+
+    parser.add_argument('--disk-nvme-total-size', dest='disk_nvme_total_size', nargs=1, required=False, type=int,
+                        help='min NVMe disk capacity in total (GB)')
+
+    parser.add_argument('--disk-nvme-each-size', dest='disk_nvme_each_size', nargs=1, required=False, type=int,
+                        help='min NVMe disk capacity per each disk (GB)')
+
+    # Special Properties
+    parser.add_argument('--hw-raid', dest='sp_hw_raid', action='store_true',
+                        help='require Hardware RAID')
+
+    parser.add_argument('--red-psu', dest='sp_red_psu', action='store_true',
+                        help='require Redundant PSU')
+
+    parser.add_argument('--ecc', dest='sp_ecc', action='store_true',
+                        help='require ECC memory')
+
+    parser.add_argument('--gpu', dest='sp_gpu', action='store_true',
+                        help='require discrete GPU')
+
+    parser.add_argument('--ipv4', dest='sp_ipv4', action='store_true',
+                        help='require IPv4')
+
+    parser.add_argument('--inic', dest='sp_inic', action='store_true',
+                        help='require Intel NIC')
+
+    parser.add_argument('--cpu-count', dest='cpu_count', nargs=1, required=False, type=int,
+                        default=[1],
+                        help='min CPU count')
+
+    parser.add_argument('--match-cpu', dest='match_cpu_description', nargs=1, required=False, type=str,
+                        help='match specific server by CPU description')
+
+    parser.add_argument('--exclude-cpu', dest='exclude_cpu_description', nargs=1, required=False, type=str,
+                        help='exclude specific server by CPU description (has priority over --match-cpu)')
+
+    parser.add_argument('--ram', dest='ram_size', nargs=1, required=False, type=int,
+                        help='min RAM (GB)')
+
+    parser.add_argument('--dc', dest='datacenter', nargs=1, required=False,
+                        help='datacenter (FSN1-DC15) or location (FSN)')
+
+    parser.add_argument('-f', nargs='?',
+                        default='/tmp/hah.txt',
+                        help='state file')
+
+    parser.add_argument('--exclude-tax', dest='exclude_tax', action='store_true',
+                        help='exclude tax from output price')
+
+    parser.add_argument('--test-mode', dest='test_mode', action='store_true',
+                        help='do not send actual messages and ignore state file')
+
+    parser.add_argument('--quiet', dest='quiet', action='store_true', default=False,
+                        help='quiet mode (suppress most text output)')
+
+    parser.add_argument('--verbose', dest='verbose', action='store_true', default=True,
+                        help='verbose mode (provide additional text output)')
+
+    parser.add_argument('--debug', dest='debug', action='store_true', default=False,
+                        help='debug mode')
+
+    parser.add_argument('--send-payload', dest='send_payload', action='store_true',
+                        help='send server data as JSON payload')
+    parser.add_argument('--job_interval', dest='job_interval', nargs=1, required=False, type=int,
+                        default=30,
+                        help='job interval in seconds default 30s')
+    cli_args = parser.parse_args()
+
+    # Set PRINT Level
+    if cli_args.debug:
+        PRINT_VERBOSE = True
+        PRINT_DEBUG = True
+    elif cli_args.verbose and not cli_args.quiet:
+        PRINT_VERBOSE = True
+        PRINT_DEBUG = False
+    elif cli_args.quiet:
+        PRINT_VERBOSE = False
+        PRINT_DEBUG = False
+    else:
+        PRINT_VERBOSE = True
+        PRINT_DEBUG = True
+
+    # Array to Store Found Matches
+    foundServers = []
+
+    if PRINT_DEBUG:
+        print(f"Debug: {cli_args.debug} , Verbose: {cli_args.verbose} , Quiet: {cli_args.quiet}")
+
+    if not cli_args.test_mode:
+        f = open(cli_args.f, 'a+')
+        idsProcessed = open(cli_args.f).read()
+        notifier_args = {}
+        text_format = 'html'
+        if cli_args.provider[0] == "dummy":
+            notifier = None
+        else:
+            provider = cli_args.provider[0]
+            notifier = notifiers.get_notifier(provider)
+            if provider == 'telegram':
+                text_format = 'markdown'
+                notifier_args = {'token': os.environ['NOTIFIERS_TELEGRAM_TOKEN'],
+                                 'chat_id': os.environ['NOTIFIERS_TELEGRAM_CHAT_ID']}
+
+    # 每30秒执行一次任务
+    schedule.every(cli_args.job_interval).seconds.do(job)
+    job()
+    while True:
+        schedule.run_pending()
+        time.sleep(1)

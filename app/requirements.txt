@@ -4,3 +4,4 @@ notifiers
 html2text
 texttable
 prisma
+schedule
