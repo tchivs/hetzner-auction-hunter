@@ -159,10 +159,13 @@ perform_search() {
     # Generate Timestamp
     local ltimestamp=$(date +%Y-%m-%d_%Hh%M)
 
+    # Define JSON File
+    json_filename="live_data_sb_EUR.json"
+
     # Build list of Arguments for hah.py
     local lhahargs=()
     lhahargs+=("--data-url")
-    lhahargs+=("file:///${APP_SEARCH_PATH}/live_data_sb.json")
+    lhahargs+=("file:///${APP_SEARCH_PATH}/${json_filename}")
     lhahargs+=("-f")
     lhahargs+=("${APP_RESULTS_PATH}/${ltimestamp}-${lsearchlabel}.txt")
     lhahargs+=("--provider")
