@@ -116,10 +116,23 @@ store_raw_data() {
     local ltimestamp=$(date +%Y-%m-%d_%Hh%M)
 
     # Download and Store the Data in Cache only once, so we don't hit Hetzner Servers too hard
-    curl -s https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json | jq > ${APP_HOST_SEARCH_PATH}/live_data_sb.json
+    # !! DOES NOT WORK ANYMORE !!
+    # curl -s https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json | jq > ${APP_HOST_SEARCH_PATH}/live_data_sb.json
+
+    # Download and Store the Data in Cache only once, so we don't hit Hetzner Servers too hard
+    # curl -s https://www.hetzner.com/_resources/app/data/app/live_data_sb_USD.json | jq > ${APP_HOST_SEARCH_PATH}/live_data_sb.json
+
+    # Download and Store the Data in Cache only once, so we don't hit Hetzner Servers too hard
+    # curl -s https://www.hetzner.com/_resources/app/data/app/live_data_sb_EUR.json | jq > ${APP_HOST_SEARCH_PATH}/live_data_sb.json
+
+    # Define JSON File
+    json_filename="live_data_sb_EUR.json"
+
+    # Download and Store the Data in Cache only once, so we don't hit Hetzner Servers too hard
+    curl -s https://www.hetzner.com/_resources/app/data/app/${json_filename} | jq > ${APP_HOST_SEARCH_PATH}/${json_filename}
 
     # Copy file so that we always have a Historic View
-    cp ${APP_HOST_SEARCH_PATH}/live_data_sb.json ${APP_HOST_SEARCH_PATH}/${ltimestamp}-live_data_sb.json
+    cp ${APP_HOST_SEARCH_PATH}/${json_filename} ${APP_HOST_SEARCH_PATH}/${ltimestamp}-${json_filename}
 }
 
 ##################################
@@ -174,7 +187,7 @@ perform_search() {
         # Run the new Container
         $engine run --rm --replace \
         --name="${lcontainer}" \
-        -v ${APP_HOST_DATA_PATH}:${APP_CONTAINER_DATA_PATH} \
+        -v ${APP_HOST_DATA_PATH}:${APP_CONTAINER_DATA_PATH}:rw,z \
         --net ${CONTAINER_NETWORK} \
         --env-file "./.env" \
         -e "NOTIFIERS_PUSHOVER_USER"="${NOTIFIERS_PUSHOVER_USER}" \
